@@ -13,10 +13,11 @@
   --teal:#00A19B; --teal-d:#00807B; --teal-50:#E6F6F5; --aqua:#10CFC9; --red:#EA0029; --red-50:#FDEBEE;
   --ink:#16302F; --ink-2:#4A5E5D; --ink-3:#7F908F; --line:#E1E8E7; --grid:#EDF1F0; --bg:#F3F6F6; --card:#FFFFFF;
   /* papéis de status (mesmas cores do app) */
-  --s-ok:#00A19B; --s-nok:#EA0029; --s-off:#7D8A96; --s-pend:#E0A33A;
+  --s-ok:#00A19B; --s-nok:#EA0029; --s-off:#44505C; --s-pend:#C3CECD; --s-cfg:#E0A33A;
   --r:14px; --shadow:0 1px 2px rgba(22,48,47,.06),0 4px 14px rgba(22,48,47,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 html,body{background:var(--bg)}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);font-size:14px;line-height:1.45;min-height:100vh}
 h1,h2,h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.01em}
@@ -33,7 +34,7 @@ button{cursor:pointer;border:0;background:none}
 .top .sp{flex:1}
 .upd{font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:8px;white-space:nowrap}
 .upd i{width:8px;height:8px;border-radius:50%;background:var(--teal)}
-.upd.err i{background:var(--red)} .upd.demo i{background:var(--s-pend)}
+.upd.err i{background:var(--red)} .upd.demo i{background:var(--s-cfg)}
 .btn{padding:8px 14px;border-radius:10px;font-weight:700;font-size:13.5px;display:inline-flex;gap:6px;align-items:center;border:1.5px solid var(--line);background:#fff}
 .btn:hover{border-color:var(--teal);color:var(--teal-d)}
 .brand-bar{height:3px;background:linear-gradient(90deg,var(--teal),var(--aqua))}
@@ -45,6 +46,7 @@ button{cursor:pointer;border:0;background:none}
 .seg{display:flex;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:3px}
 .seg button{padding:6px 12px;border-radius:7px;font-weight:600;font-size:13px;color:var(--ink-2)}
 .seg button.on{background:var(--teal);color:#fff}
+.sel:disabled{opacity:.7;cursor:default}
 .sel{appearance:none;padding:8px 34px 8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300A19B' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;font-weight:600;min-width:150px}
 .sel:focus,.inp:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,161,155,.15)}
 .f-clear{font-size:13px;font-weight:700;color:var(--teal-d);padding:9px 6px}
@@ -78,6 +80,18 @@ button{cursor:pointer;border:0;background:none}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.split{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:center}
+.donut{position:relative;height:200px;width:200px}
+.donut .dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut .dc b{font-size:28px;font-weight:700;line-height:1}
+.donut .dc span{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+table.mini{font-size:13px}
+table.mini th{position:static;background:none;cursor:default;padding:6px 8px;border-bottom:1.5px solid var(--line)}
+table.mini th.n,table.mini td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.mini td{padding:8px;border-bottom:1px solid var(--grid)}
+table.mini td .k{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+table.mini tr.tot td{font-weight:700;border-bottom:0;border-top:1.5px solid var(--line)}
+table.mini tr:hover td{background:none}
 .empty-c{display:grid;place-items:center;color:var(--ink-3);font-size:13px;border:1.5px dashed var(--line);border-radius:10px}
 
 /* tabela */
@@ -98,7 +112,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .pref{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:15px}
 .placa{font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--ink-2);border:1px solid #C9D3D2;border-top:3px solid #1F4FA0;border-radius:4px;padding:0 5px;line-height:1.5;white-space:nowrap}
 .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;display:inline-flex;gap:4px;align-items:center}
-.b-ok{background:var(--teal-50);color:var(--teal-d)} .b-nok{background:var(--red-50);color:#B4001F} .b-off{background:#ECEFF3;color:#4E5B67} .b-pend{background:#FBF3E4;color:#8F5E0E}
+.b-ok{background:var(--teal-50);color:var(--teal-d)} .b-nok{background:var(--red-50);color:#B4001F} .b-off{background:#E6E9ED;color:#3A4550} .b-pend{background:#EEF2F2;color:#4A5E5D}
 .def{color:#B4001F;font-weight:600}
 .def small{display:block;color:var(--ink-3);font-weight:500}
 
@@ -113,6 +127,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .foot{max-width:1320px;margin:0 auto;padding:0 20px 24px;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between}
 
 @media(max-width:1100px){.kpi-row{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr}.row3>.card:first-child{grid-column:1/-1}}
+@media(max-width:1100px){.split{grid-template-columns:1fr;justify-items:center}.split table{width:100%}}
 @media(max-width:760px){.kpi-row,.row2,.row3{grid-template-columns:1fr}.hero .v{font-size:48px}.top .sep,.upd span{display:none}.wrap{padding:14px 16px 32px}.top-in{padding:10px 16px}.inp{min-width:0;flex:1}.tbl-tools{width:100%}.seg{flex-wrap:wrap}.sel{min-width:0;width:100%}.f{flex:1 1 140px}}
 </style>
 </head>
@@ -134,12 +149,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 <main class="wrap" id="main">
   <!-- filtros: uma linha, acima de tudo -->
   <section class="filters" aria-label="Filtros">
-    <div class="f"><label>Período</label>
-      <div class="seg" id="fPeriodo">
-        <button data-p="hoje">Hoje</button><button data-p="7">7 dias</button><button data-p="30">30 dias</button><button data-p="tudo" class="on">Tudo</button>
-      </div>
-    </div>
     <div class="f"><label for="fSetor">Setor</label><select id="fSetor" class="sel"></select></div>
+    <div class="f"><label for="fAudit">Auditoria</label><select id="fAudit" class="sel" style="min-width:240px"></select></div>
     <div class="f"><label for="fTipo">Tipo de veículo</label><select id="fTipo" class="sel"></select></div>
     <div class="f"><label for="fAud">Auditor</label><select id="fAud" class="sel"></select></div>
     <button class="f-clear" id="fLimpar">Limpar filtros</button>
@@ -156,7 +167,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
       <div><div class="meter"><span id="kIndiceM" style="width:0"></span></div></div>
     </div>
     <div class="card tile">
-      <small>Avanço da auditoria</small>
+      <small>Veículos avaliados</small>
       <div class="v" id="kAvanco">—</div>
       <div class="d" id="kAvancoD">—</div>
     </div>
@@ -173,43 +184,42 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
     </div>
   </section>
 
-  <!-- situação -->
+  <!-- amostra + status -->
   <section class="grid row2" style="margin-top:14px">
     <div class="card">
-      <div class="card-h"><div><h3>Situação da frota por setor</h3><div class="sub">Veículos por resultado da checagem vigente</div></div></div>
-      <div class="legend" id="lgSetor"></div>
-      <div class="chart" id="cSetorBox"><canvas id="cSetor"></canvas></div>
+      <div class="card-h"><div><h3>Amostra</h3><div class="sub" id="amSub">Frota avaliada x não avaliada</div></div></div>
+      <div class="split">
+        <div class="donut"><canvas id="cAmostra"></canvas><div class="dc"><b id="amCentro">—</b><span>avaliados</span></div></div>
+        <table class="mini"><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Part.</th></tr></thead><tbody id="tAmostra"></tbody></table>
+      </div>
     </div>
     <div class="card">
-      <div class="card-h"><div><h3>Checagens por dia</h3><div class="sub">Veículos checados em cada dia, por resultado</div></div></div>
-      <div class="legend" id="lgDia"></div>
-      <div class="chart" style="height:280px"><canvas id="cDia"></canvas></div>
+      <div class="card-h"><div><h3>Status dos veículos avaliados</h3><div class="sub">Resultado da checagem vigente</div></div></div>
+      <div class="split">
+        <div class="donut"><canvas id="cStatus"></canvas><div class="dc"><b id="stCentro">—</b><span>imagem OK</span></div></div>
+        <table class="mini"><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Part.</th></tr></thead><tbody id="tStatus"></tbody></table>
+      </div>
     </div>
   </section>
 
-  <!-- defeitos -->
-  <section class="grid row3" style="margin-top:14px">
+  <!-- defeitos + auditores -->
+  <section class="grid row2" style="margin-top:14px">
     <div class="card">
       <div class="card-h"><div><h3>Defeitos mais frequentes</h3><div class="sub">Ocorrências nos itens não conformes</div></div></div>
       <div class="chart" id="cDefBox"><canvas id="cDef"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-h"><div><h3>Defeitos por posição</h3><div class="sub">Itens com defeito — MDVR e cada câmera</div></div></div>
-      <div class="chart" style="height:260px"><canvas id="cPos"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-h"><div><h3>Conformidade por tipo</h3><div class="sub">Veículos checados por tipo</div></div></div>
-      <div class="legend" id="lgTipo"></div>
-      <div class="chart" id="cTipoBox"><canvas id="cTipo"></canvas></div>
+      <div class="card-h"><div><h3>Produtividade por auditor</h3><div class="sub">Veículos avaliados por cada auditor</div></div></div>
+      <div class="legend" id="lgAud"></div>
+      <div class="chart" style="height:300px"><canvas id="cAud"></canvas></div>
     </div>
   </section>
 
-  <!-- auditores -->
-  <section class="grid" style="margin-top:14px">
+  <!-- por setor (só aparece com mais de um setor no filtro) -->
+  <section class="grid" style="margin-top:14px" id="secSetor">
     <div class="card">
-      <div class="card-h"><div><h3>Produtividade por auditor</h3><div class="sub">Veículos com checagem vigente registrada por cada auditor</div></div></div>
-      <div class="legend" id="lgAud"></div>
-      <div class="chart" id="cAudBox"><canvas id="cAud"></canvas></div>
+      <div class="card-h"><div><h3>Índice de conformidade por setor</h3><div class="sub">% de veículos com imagem OK entre os avaliados</div></div></div>
+      <div class="chart" style="height:260px"><canvas id="cSetor"></canvas></div>
     </div>
   </section>
 
@@ -244,7 +254,7 @@ const REFRESH_MS = 60000;
 
 const RES = { OK:'CONFORME', NOK:'NAO_CONFORME', OFF:'CHAVE_DESLIGADA', PEND:'PENDENTE' };
 const LBL = { CONFORME:'Conforme', NAO_CONFORME:'Não conforme', CHAVE_DESLIGADA:'Chave desligada', PENDENTE:'Pendente' };
-const COR = { CONFORME:'#00A19B', NAO_CONFORME:'#EA0029', CHAVE_DESLIGADA:'#7D8A96', PENDENTE:'#E0A33A' };
+const COR = { CONFORME:'#00A19B', NAO_CONFORME:'#EA0029', CHAVE_DESLIGADA:'#44505C', PENDENTE:'#C3CECD', CONFIG:'#E0A33A' };
 const BADGE = { CONFORME:'b-ok', NAO_CONFORME:'b-nok', CHAVE_DESLIGADA:'b-off', PENDENTE:'b-pend' };
 const ORDEM = [RES.OK, RES.NOK, RES.OFF, RES.PEND];
 const POSICOES = ['MDVR', 'Frontal', 'Motorista', 'Entrada do salão', 'Fundo do salão'];
@@ -294,48 +304,71 @@ function demoDados(){
         const df = op[Math.floor(rnd() * op.length)]; if (!it.defeitos.includes(df)) it.defeitos.push(df); if (df === 'Outros') it.outro = 'Lente trincada';
       }
     }
-    checagens.push({ placa:v.placa, resultado, dataHora:d.toISOString(), realizador:pk(aud), observacao:'', edicao:1, itens });
+    checagens.push({ placa:v.placa, resultado, dataHora:d.toISOString(), realizador:pk(aud), observacao:'', edicao:1, itens, auditoria:'A2-' + v.setor });
+    if (rnd() < .8){ const a = new Date(d); a.setMonth(a.getMonth() - 6); const r2 = rnd() < .75 ? RES.OK : RES.NOK;
+      checagens.push({ placa:v.placa, resultado:r2, dataHora:a.toISOString(), realizador:pk(aud), observacao:'', edicao:1, auditoria:'A1-' + v.setor,
+        itens: itens.map((it, j) => ({ ...it, defeitos: r2 === RES.NOK && j === 1 ? ['Câmera desregulada'] : [], outro:'' })) }); }
   });
-  return { gerado:new Date().toISOString(), cadastro, checagens };
+  const ano = new Date().getFullYear(), hoje = new Date(), ab = new Date(); ab.setDate(ab.getDate() - 9);
+  const a1i = new Date(ab), a1f = new Date(ab); a1i.setMonth(a1i.getMonth() - 6); a1f.setMonth(a1f.getMonth() - 6); a1f.setDate(a1f.getDate() + 12);
+  const auditorias = [];
+  [...new Set(cadastro.map(v => v.setor))].forEach((s, i) => {
+    const frota = cadastro.filter(v => v.setor === s);
+    auditorias.push({ id:'A1-' + s, setor:s, rotulo:'1ª auditoria ' + ano, status:'FINALIZADA', abertaEm:a1i.toISOString(), finalizadaEm:a1f.toISOString(), finalizadaPor:'Ana Souza', frota });
+    auditorias.push({ id:'A2-' + s, setor:s, rotulo:'2ª auditoria ' + ano, status: i === 0 ? 'FINALIZADA' : 'ABERTA', abertaEm:ab.toISOString(), finalizadaEm: i === 0 ? hoje.toISOString() : '', finalizadaPor: i === 0 ? 'Bruno Lima' : '', frota });
+  });
+  return { gerado:new Date().toISOString(), auditorias, checagens };
 }
 
 /* =====================================================================
    ESTADO + FILTROS
    ===================================================================== */
-const S = { raw:null, periodo:'tudo', setor:'', tipo:'', aud:'', tab:RES.NOK, busca:'', sort:{ k:'data', dir:-1 } };
+const S = { raw:null, audit:'', setor:'', tipo:'', aud:'', tab:RES.NOK, busca:'', sort:{ k:'data', dir:-1 } };
 
-function inicioPeriodo(){
-  const d = new Date(); d.setHours(0,0,0,0);
-  if (S.periodo === 'hoje') return d;
-  if (S.periodo === '7'){ d.setDate(d.getDate() - 6); return d; }
-  if (S.periodo === '30'){ d.setDate(d.getDate() - 29); return d; }
-  return null;
+const fmtDia = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '';
+const audLbl = a => `${a.rotulo} · ${a.status === 'FINALIZADA' ? 'concluída' : 'em andamento'} (${fmtDia(a.abertaEm)}${a.finalizadaEm ? ' a ' + fmtDia(a.finalizadaEm) : ''})`;
+const recente = (a, b) => String(b.abertaEm).localeCompare(String(a.abertaEm));
+
+/** Auditorias em foco: a escolhida (com um setor no filtro) ou a mais recente de cada setor. */
+function audsEmFoco(){
+  const A = S.raw?.auditorias || [];
+  if (S.setor) return A.filter(a => a.id === S.audit);
+  const ult = {}; A.slice().sort(recente).forEach(a => { if (!ult[a.setor]) ult[a.setor] = a; });
+  return Object.values(ult);
 }
 
-/** Junta cadastro + checagem vigente e aplica os filtros. Checagem fora do período conta como pendente no período. */
+/** Frota (amostra) das auditorias em foco + a checagem de cada veículo dentro da auditoria. Sem checagem = não avaliado. */
 function linhas(){
-  const chk = Object.fromEntries((S.raw?.checagens || []).map(c => [c.placa, c]));
-  const ini = inicioPeriodo();
-  return (S.raw?.cadastro || [])
-    .filter(v => (!S.setor || v.setor === S.setor) && (!S.tipo || v.tipo === S.tipo))
-    .map(v => {
-      let c = chk[v.placa] || null;
-      if (c && ini && new Date(c.dataHora) < ini) c = null;
-      return { ...v, c, status: c ? c.resultado : RES.PEND };
-    })
+  const chk = {}; (S.raw?.checagens || []).forEach(c => { chk[c.placa + '|' + c.auditoria] = c; });
+  return audsEmFoco().flatMap(a => (a.frota || []).map(v => ({ ...v, setor: v.setor || a.setor, auditoria: a })))
+    .filter(v => !S.tipo || v.tipo === S.tipo)
+    .map(v => { const c = chk[v.placa + '|' + v.auditoria.id] || null; return { ...v, c, status: c ? c.resultado : RES.PEND }; })
     .filter(v => !S.aud || (v.c && v.c.realizador === S.aud));
 }
 
 function preencherFiltros(){
-  const cad = S.raw.cadastro, ck = S.raw.checagens;
+  const A = S.raw.auditorias || [], ck = S.raw.checagens || [];
   const opt = (el, vals, todos, atual) => {
     el.innerHTML = `<option value="">${todos}</option>` + vals.map(v => `<option${v === atual ? ' selected' : ''}>${esc(v)}</option>`).join('');
     if (atual && !vals.includes(atual)) el.value = '';
   };
-  opt($('#fSetor'), [...new Set(cad.map(v => v.setor))].sort(), 'Todos os setores', S.setor);
-  opt($('#fTipo'), [...new Set(cad.map(v => v.tipo).filter(Boolean))].sort(), 'Todos os tipos', S.tipo);
-  opt($('#fAud'), [...new Set(ck.map(c => c.realizador).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR')), 'Todos os auditores', S.aud);
-  S.setor = $('#fSetor').value; S.tipo = $('#fTipo').value; S.aud = $('#fAud').value;
+  opt($('#fSetor'), [...new Set(A.map(a => a.setor))].sort(), 'Todos os setores', S.setor);
+  S.setor = $('#fSetor').value;
+  const doSetor = A.filter(a => a.setor === S.setor).sort(recente);
+  if (S.setor){
+    if (!doSetor.some(a => a.id === S.audit)) S.audit = doSetor[0]?.id || '';
+    $('#fAudit').innerHTML = doSetor.map(a => `<option value="${esc(a.id)}"${a.id === S.audit ? ' selected' : ''}>${esc(audLbl(a))}</option>`).join('');
+    $('#fAudit').disabled = false;
+  } else {
+    S.audit = '';
+    $('#fAudit').innerHTML = '<option value="">Mais recente de cada setor</option>';
+    $('#fAudit').disabled = true;
+  }
+  const frota = audsEmFoco().flatMap(a => a.frota || []);
+  opt($('#fTipo'), [...new Set(frota.map(v => v.tipo).filter(Boolean))].sort(), 'Todos os tipos', S.tipo);
+  const ids = new Set(audsEmFoco().map(a => a.id));
+  opt($('#fAud'), [...new Set(ck.filter(c => ids.has(c.auditoria)).map(c => c.realizador).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR')), 'Todos os auditores', S.aud);
+  S.tipo = $('#fTipo').value; S.aud = $('#fAud').value;
 }
 
 /* =====================================================================
@@ -371,7 +404,7 @@ function tooltipExterno(ctx){
 
 function base(horizontal, stacked){
   const grid = { color:'#EDF1F0', lineWidth:1, drawTicks:false };
-  const valor = { beginAtZero:true, stacked, grid, border:{ display:false }, ticks:{ precision:0, padding:6 } };
+  const valor = { beginAtZero:true, stacked, grid, border:{ display:false }, ticks:{ precision:0, padding:6 }, grace:'12%' };
   const cat = { stacked, grid:{ display:false }, border:{ color:'#E1E8E7' }, ticks:{ padding:6 } };
   return {
     responsive:true, maintainAspectRatio:false, indexAxis: horizontal ? 'y' : 'x',
@@ -406,6 +439,37 @@ function grafico(id, cfg){
 }
 function alturaBarras(boxId, n){ $('#' + boxId).style.height = Math.max(140, n * 38 + 40) + 'px'; }
 
+/** Rosca: anel fino, vão de 2px na cor da superfície, sem rótulo em cada fatia (a tabela ao lado traz os números). */
+function rosca(id, labels, data, cores){
+  const total = data.reduce((a, b) => a + b, 0);
+  grafico(id, { type:'doughnut', data:{ labels, datasets:[{ label:'', data: total ? data : labels.map(() => 0), backgroundColor:cores, hoverBackgroundColor:cores,
+      borderColor:'#FFFFFF', borderWidth:2, hoverOffset:4, spacing:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{ legend:{ display:false },
+      tooltip:{ enabled:false, external:tooltipExterno, callbacks:{ label: c => c.raw + ' (' + fmtPct(pct(c.raw, total)) + ')' } } } } });
+}
+/** Tabela ao lado da rosca: chave de cor + descritivo, quantidade e participação. */
+function tabelaMini(sel, rows){
+  $(sel).innerHTML = rows.map(([d, q, p, cor, tot]) => `<tr class="${tot ? 'tot' : ''}"><td>${cor ? `<span class="k" style="background:${cor}"></span>` : ''}${esc(d)}</td><td class="n">${q}</td><td class="n">${fmtPct(p)}</td></tr>`).join('');
+}
+/** Valor na ponta da barra (série única). */
+const rotuloPonta = { id:'rotuloPonta', afterDatasetsDraw(chart){
+  const { ctx } = chart; const ds = chart.data.datasets[0]; const meta = chart.getDatasetMeta(0); const hz = chart.options.indexAxis === 'y';
+  ctx.save(); ctx.font = "600 12px 'Plus Jakarta Sans', system-ui, sans-serif"; ctx.fillStyle = '#16302F';
+  meta.data.forEach((bar, i) => { const v = ds.data[i]; if (!v) return; const txt = (ds.sufixo ? v.toLocaleString('pt-BR', { maximumFractionDigits:1 }) + ds.sufixo : v);
+    if (hz){ ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, bar.x + 6, bar.y); }
+    else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(txt, bar.x, bar.y - 4); } });
+  ctx.restore(); } };
+/** Total no topo de cada coluna empilhada. */
+const rotuloTotal = { id:'rotuloTotal', afterDatasetsDraw(chart){
+  const { ctx } = chart; const n = chart.data.labels.length; ctx.save();
+  ctx.font = "700 12.5px 'Plus Jakarta Sans', system-ui, sans-serif"; ctx.fillStyle = '#16302F'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  for (let i = 0; i < n; i++){
+    let tot = 0, topo = Infinity, x = 0;
+    chart.data.datasets.forEach((d, k) => { const el = chart.getDatasetMeta(k).data[i]; if (d.data[i] > 0 && el){ tot += d.data[i]; topo = Math.min(topo, el.y); x = el.x; } });
+    if (tot) ctx.fillText(tot, x, topo - 5);
+  }
+  ctx.restore(); } };
+
 /* =====================================================================
    RENDER
    ===================================================================== */
@@ -419,61 +483,66 @@ function render(){
   const camDef = cams.filter(i => i.defeitos.length).length, mdvrDef = mdvrs.filter(i => i.defeitos.length).length;
 
   // indicadores
-  const ind = pct(ok, checados);
-  $('#kIndice').textContent = checados ? fmtPct(ind) : '—';
-  $('#kIndiceD').textContent = checados ? `${ok} de ${checados} veículos checados estão conformes` : 'Nenhum veículo checado no filtro atual';
+  const avaliados = ok + nok + off, ind = pct(ok, avaliados);
+  $('#kIndice').textContent = avaliados ? fmtPct(ind) : '—';
+  $('#kIndiceD').textContent = avaliados ? `${ok} de ${avaliados} veículos avaliados com imagem OK` : 'Nenhum veículo avaliado no filtro atual';
   $('#kIndiceM').style.width = ind + '%';
-  $('#kAvanco').textContent = fmtPct(pct(checados, V.length));
-  $('#kAvancoD').textContent = `${checados} de ${V.length} veículos com checagem finalizada`;
+  $('#kAvanco').textContent = avaliados;
+  $('#kAvancoD').textContent = `de ${V.length} da frota (${fmtPct(pct(avaliados, V.length))})`;
   $('#kNok').textContent = nok;
-  $('#kNokD').textContent = checados ? `${fmtPct(pct(nok, checados))} dos checados` : '—';
+  $('#kNokD').textContent = avaliados ? `${fmtPct(pct(nok, avaliados))} dos avaliados` : '—';
   $('#kCam').textContent = camDef; $('#kCamD').textContent = cams.length ? `de ${cams.length} avaliadas (${fmtPct(pct(camDef, cams.length))})` : 'nenhuma avaliada';
   $('#kMdvr').textContent = mdvrDef; $('#kMdvrD').textContent = mdvrs.length ? `de ${mdvrs.length} avaliados (${fmtPct(pct(mdvrDef, mdvrs.length))})` : 'nenhum avaliado';
   $('#kOff').textContent = off; $('#kPend').textContent = pend;
 
-  // situação por setor (empilhado horizontal)
-  const setores = [...new Set(V.map(v => v.setor))].sort();
-  legenda($('#lgSetor'), ORDEM);
-  alturaBarras('cSetorBox', setores.length);
-  grafico('cSetor', { type:'bar', options: base(true, true), data:{ labels:setores,
-    datasets: pontaArredondada(ORDEM.map(st => dsStatus(st, setores.map(s => V.filter(v => v.setor === s && v.status === st).length))), true) } });
+  // amostra (rosca)
+  const aval = ok + nok + off;
+  const fo = audsEmFoco();
+  $('#amSub').textContent = S.setor && fo[0] ? `Frota ${S.setor} · ${audLbl(fo[0])}` : 'Frota total · auditoria mais recente de cada setor';
+  $('#amCentro').textContent = V.length ? fmtPct(pct(aval, V.length)) : '—';
+  tabelaMini('#tAmostra', [
+    ['Frota' + (S.setor ? ' ' + S.setor : ''), V.length, 100, null, true],
+    ['Veículos avaliados', aval, pct(aval, V.length), COR.CONFORME],
+    ['Veículos não avaliados', pend, pct(pend, V.length), COR.PENDENTE]
+  ], false);
+  rosca('cAmostra', ['Avaliados', 'Não avaliados'], [aval, pend], [COR.CONFORME, COR.PENDENTE]);
 
-  // checagens por dia (colunas empilhadas)
-  const dias = [...new Set(V.filter(v => v.c).map(v => diaKey(v.c.dataHora)))].sort();
-  const diasLbl = dias.map(d => d.slice(8,10) + '/' + d.slice(5,7));
-  const ordDia = [RES.OK, RES.NOK, RES.OFF];
-  legenda($('#lgDia'), ordDia);
-  grafico('cDia', { type:'bar', options: base(false, true), data:{ labels:diasLbl,
-    datasets: pontaArredondada(ordDia.map(st => dsStatus(st, dias.map(d => V.filter(v => v.c && v.status === st && diaKey(v.c.dataHora) === d).length))), false) } });
+  // status dos avaliados (rosca) — "imagem OK + configuração" = câmeras OK e MDVR só com defeito de configuração
+  const soConfig = v => v.status === RES.NOK && v.c.itens.every(i => i.tipo === 'MDVR' ? i.defeitos.every(d => d === 'Configuração') : !i.defeitos.length);
+  const cfg = V.filter(soConfig).length, prob = nok - cfg;
+  const st = [['Imagem OK', ok, COR.CONFORME], ['Imagem OK + problema de configuração', cfg, COR.CONFIG], ['Com problema', prob, COR.NAO_CONFORME], ['Chave geral desligada', off, COR.CHAVE_DESLIGADA]];
+  $('#stCentro').textContent = aval ? fmtPct(pct(ok, aval)) : '—';
+  tabelaMini('#tStatus', st.map(x => [x[0], x[1], pct(x[1], aval), x[2]]).concat([['Total avaliados', aval, aval ? 100 : 0, null, true]]), true);
+  rosca('cStatus', st.map(x => x[0]), st.map(x => x[1]), st.map(x => x[2]));
 
-  // defeitos mais frequentes (série única)
+  // defeitos mais frequentes (barras horizontais, série única)
   const freq = {};
   itens.forEach(i => i.defeitos.forEach(d => { const k = (i.tipo === 'MDVR' ? 'MDVR · ' : 'Câmera · ') + (d === 'Outros' ? 'Outros' : d.replace(/^Câmera /, '')); freq[k] = (freq[k] || 0) + 1; }));
   const defs = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-  alturaBarras('cDefBox', Math.max(defs.length, 3));
+  alturaBarras('cDefBox', Math.max(defs.length, 4));
   const oDef = base(true, false); oDef.interaction = { mode:'nearest', intersect:true, axis:'y' };
-  grafico('cDef', { type:'bar', options:oDef, data:{ labels:defs.map(d => d[0]),
+  grafico('cDef', { type:'bar', options:oDef, plugins:[rotuloPonta], data:{ labels:defs.map(d => d[0]),
     datasets:[{ label:'Ocorrências', data:defs.map(d => d[1]), backgroundColor:'#EA0029', hoverBackgroundColor:'#C60023', borderRadius:{ topRight:4, bottomRight:4 }, borderSkipped:false, maxBarThickness:22, categoryPercentage:.75, barPercentage:.9 }] } });
 
-  // defeitos por posição (série única)
-  const porPos = POSICOES.map(p => itens.filter(i => i.defeitos.length && (p === 'MDVR' ? i.tipo === 'MDVR' : i.pos === p)).length);
-  const oPos = base(false, false); oPos.interaction = { mode:'nearest', intersect:true, axis:'x' };
-  grafico('cPos', { type:'bar', options:oPos, data:{ labels:POSICOES.map(p => p === 'Entrada do salão' ? ['Entrada','do salão'] : p === 'Fundo do salão' ? ['Fundo','do salão'] : p),
-    datasets:[{ label:'Itens com defeito', data:porPos, backgroundColor:'#EA0029', hoverBackgroundColor:'#C60023', borderRadius:{ topLeft:4, topRight:4 }, borderSkipped:false, maxBarThickness:24 }] } });
-
-  // conformidade por tipo
-  const tipos = [...new Set(V.filter(v => v.c && v.status !== RES.OFF).map(v => v.tipo || '—'))].sort();
-  legenda($('#lgTipo'), [RES.OK, RES.NOK]);
-  alturaBarras('cTipoBox', Math.max(tipos.length, 2));
-  grafico('cTipo', { type:'bar', options: base(true, true), data:{ labels:tipos,
-    datasets: pontaArredondada([RES.OK, RES.NOK].map(st => dsStatus(st, tipos.map(t => V.filter(v => (v.tipo || '—') === t && v.status === st).length))), true) } });
-
-  // auditores
+  // produtividade por auditor (colunas em pé, nome embaixo)
   const auds = [...new Set(V.filter(v => v.c).map(v => v.c.realizador))].sort((a,b) => a.localeCompare(b,'pt-BR'));
-  legenda($('#lgAud'), ordDia);
-  alturaBarras('cAudBox', Math.max(auds.length, 2));
-  grafico('cAud', { type:'bar', options: base(true, true), data:{ labels:auds,
-    datasets: pontaArredondada(ordDia.map(st => dsStatus(st, auds.map(a => V.filter(v => v.c && v.c.realizador === a && v.status === st).length))), true) } });
+  const ordAud = [RES.OK, RES.NOK, RES.OFF];
+  legenda($('#lgAud'), ordAud);
+  const oAud = base(false, true); oAud.scales.x.ticks.autoSkip = false;
+  grafico('cAud', { type:'bar', options:oAud, plugins:[rotuloTotal], data:{ labels:auds,
+    datasets: pontaArredondada(ordAud.map(s => ({ ...dsStatus(s, auds.map(a => V.filter(v => v.c && v.c.realizador === a && v.status === s).length)), maxBarThickness:56 })), false) } });
+
+  // conformidade por setor (colunas, %)
+  const setores = [...new Set(V.map(v => v.setor))].sort();
+  $('#secSetor').hidden = setores.length < 2;
+  if (setores.length >= 2){
+    const idx = setores.map(s => { const a = V.filter(v => v.setor === s && (v.status === RES.OK || v.status === RES.NOK || v.status === RES.OFF)); return a.length ? pct(a.filter(v => v.status === RES.OK).length, a.length) : 0; });
+    const oSet = base(false, false); oSet.interaction = { mode:'nearest', intersect:true, axis:'x' };
+    oSet.scales.y.max = 100; oSet.scales.y.ticks.callback = v => v + '%';
+    oSet.plugins.tooltip.callbacks = { label: c => fmtPct(c.raw) };
+    grafico('cSetor', { type:'bar', options:oSet, plugins:[rotuloPonta], data:{ labels:setores,
+      datasets:[{ label:'Imagem OK', data:idx, backgroundColor:'#00A19B', hoverBackgroundColor:'#00807B', borderRadius:{ topLeft:4, topRight:4 }, borderSkipped:false, maxBarThickness:56, sufixo:'%' }] } });
+  }
 
   renderTabela(V, { ok, nok, off, pend });
 }
@@ -549,11 +618,11 @@ async function carregar(){
   }finally{ carregando = false; $('#main').classList.remove('loading'); }
 }
 
-$('#fPeriodo').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; S.periodo = b.dataset.p; $$('#fPeriodo button').forEach(x => x.classList.toggle('on', x === b)); render(); });
-$('#fSetor').addEventListener('change', e => { S.setor = e.target.value; render(); });
+$('#fAudit').addEventListener('change', e => { S.audit = e.target.value; preencherFiltros(); render(); });
+$('#fSetor').addEventListener('change', e => { S.setor = e.target.value; S.audit = ''; preencherFiltros(); render(); });
 $('#fTipo').addEventListener('change', e => { S.tipo = e.target.value; render(); });
 $('#fAud').addEventListener('change', e => { S.aud = e.target.value; render(); });
-$('#fLimpar').addEventListener('click', () => { S.periodo = 'tudo'; S.setor = S.tipo = S.aud = ''; $$('#fPeriodo button').forEach(x => x.classList.toggle('on', x.dataset.p === 'tudo')); preencherFiltros(); render(); });
+$('#fLimpar').addEventListener('click', () => { S.audit = S.setor = S.tipo = S.aud = ''; preencherFiltros(); render(); });
 $('#tTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tab = b.dataset.t; $$('#tTabs .tab').forEach(x => x.classList.toggle('on', x === b)); render(); });
 $('#tBusca').addEventListener('input', e => { S.busca = e.target.value; renderTabela(linhas(), { ok:+$('#tnOk').textContent, nok:+$('#tnNok').textContent, off:+$('#tnOff').textContent, pend:+$('#tnPend').textContent }); });
 $('#tbl thead').addEventListener('click', e => { const th = e.target.closest('th'); if (!th) return; const k = th.dataset.k; S.sort = { k, dir: S.sort.k === k ? -S.sort.dir : 1 }; render(); });

@@ -82,6 +82,18 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
 .aud-bar .s small{display:block;font-size:11.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 .aud-bar .s h2{font-size:22px;line-height:1.15}
 .aud-bar .s .r{font-size:13px;color:var(--ink-2);margin-top:2px}
+.aud-bar .acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn-fin{padding:9px 14px;font-size:14px;border:1.5px solid var(--red);color:var(--red);background:#fff}
+.btn-fin:hover{background:var(--red-50)}
+.st-info{border-radius:12px;padding:12px 14px;font-size:13.5px;margin:-2px 0 14px;line-height:1.5}
+.st-info.ab{background:var(--teal-50);color:var(--teal-d)}
+.st-info.fin{background:var(--off-50);color:#3A4550}
+.st-info b{display:block;font-size:14px}
+.fin-tbl{width:100%;border-collapse:collapse;font-size:14px;margin:4px 0 12px}
+.fin-tbl td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.fin-tbl td:last-child{text-align:right;font-weight:700}
+.fin-tbl tr.tot td{border-bottom:0;font-weight:700}
+.fin-tbl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px}
 .panel{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .kpi{background:var(--bg);border-radius:10px;padding:10px 12px}
@@ -225,6 +237,7 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
   .kpis{grid-template-columns:repeat(2,1fr)}
   .sh-foot .hint{font-size:11.5px}.sh-foot .btn{padding:12px 14px}
   .tabs{width:100%}.tab{flex:1;justify-content:center}
+  .aud-bar .s{flex-basis:100%}.aud-bar .acts{width:100%}.aud-bar .acts .btn{flex:1}
 }
 </style>
 </head>
@@ -244,7 +257,7 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
   <div class="brand-bar"></div>
   <div class="menu" id="menu">
     <div class="who-m"><b id="mUser">—</b><small id="mPerfil">—</small></div>
-    <button data-act="setor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>Trocar setor / encerrar auditoria</button>
+    <button data-act="setor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>Trocar setor</button>
     <button data-act="exportar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3m0 0L8 7m4-4l4 4M4 17v3h16v-3"/></svg>Exportar checagens do setor (CSV)</button>
     <hr data-demo>
     <button data-act="limpar" class="danger" data-demo><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m-9 0l1 14h8l1-14"/></svg>Restaurar dados de demonstração</button>
@@ -255,13 +268,14 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
 <section class="entry" id="scrStart" hidden>
   <div class="card">
     <img class="logo" src="data:image/png;base64,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" alt="Univale">
-    <h1>Nova auditoria</h1>
+    <h1>Auditoria</h1>
     <p class="lead">Checagem de câmeras · Monitoramento</p>
     <div class="field"><label for="selSetor">Setor</label><select id="selSetor" class="select"></select></div>
     <div class="field"><label for="inpResp">Nome do auditor</label><input id="inpResp" class="inp" placeholder="Nome e sobrenome" list="dlNomes" autocomplete="name">
       <datalist id="dlNomes"></datalist></div>
+    <div class="st-info" id="stInfo" hidden></div>
     <button class="btn btn-p" id="btnIniciar" disabled>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Iniciar auditoria
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span id="btnIniTxt">Iniciar auditoria</span>
     </button>
   </div>
 </section>
@@ -270,7 +284,10 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
 <main class="wrap" id="scrAud" hidden>
   <div class="aud-bar">
     <div class="s"><small>Auditoria em andamento</small><h2 id="aSetor">—</h2><div class="r" id="aResp">—</div></div>
-    <button class="btn btn-o" id="btnTrocar" style="padding:9px 14px;font-size:14px">Trocar setor</button>
+    <div class="acts">
+      <button class="btn btn-o" id="btnTrocar" style="padding:9px 14px;font-size:14px">Trocar setor</button>
+      <button class="btn btn-fin" id="btnFinalizar">Finalizar auditoria</button>
+    </div>
   </div>
   <section class="panel">
     <div class="kpis">
@@ -382,7 +399,7 @@ const ss = { get(k){ try{ return sessionStorage.getItem('uv_'+k); }catch(e){ ret
 const ls = { get(k){ try{ return localStorage.getItem('uv_'+k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem('uv_'+k,v); }catch(e){} } };
 
 const demo = (() => {
-  const KEY = 'uv_cam_demo_v2'; let mem = null;
+  const KEY = 'uv_cam_demo_v3'; let mem = null;
   const read = () => { try{ const v = localStorage.getItem(KEY); return v ? JSON.parse(v) : mem; }catch(e){ return mem; } };
   const write = d => { mem = d; try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} };
   function seed(){
@@ -396,33 +413,36 @@ const demo = (() => {
     ];
     const veiculos = [];
     frota.forEach(([setor, tipo, cams, n, p0]) => { for (let i = 0; i < n; i++) veiculos.push({ setor, prefixo:String(p0 + i), placa:placa(), tipo, cameras:cams }); });
-    return {
-      veiculos, checagens:{}, reservas:{}, versao:{}
-    };
+    const auds = {};
+    [...new Set(veiculos.map(v => v.setor))].forEach(s => { auds[s] = { id:'AUD-DEMO-' + s, setor:s, rotulo:'2ª auditoria ' + new Date().getFullYear(), status:'ABERTA', abertaEm:new Date().toISOString(), finalizadaEm:'', finalizadaPor:'', resumo:{} }; });
+    return { veiculos, checagens:{}, reservas:{}, versao:{}, auds };
   }
   const db = () => { let d = read(); if (!d){ d = seed(); write(d); } return d; };
   const bump = (d, setor) => { d.versao[setor] = (d.versao[setor] || 0) + 1; };
   const vivas = d => { const now = Date.now(); for (const p in d.reservas) if (now - d.reservas[p].ts > RES_TTL) delete d.reservas[p]; return d.reservas; };
-  const veicSetor = (d, setor) => d.veiculos.filter(v => v.setor === setor).map(v => {
-    const c = d.checagens[v.placa]; return { ...v, status: c ? c.resultado : RES.PEND, checagem: c || null };
-  });
+  const audAberta = (d, setor) => d.auds[setor] && d.auds[setor].status === 'ABERTA' ? d.auds[setor] : null;
+  const veicSetor = (d, setor) => { const a = audAberta(d, setor); return d.veiculos.filter(v => v.setor === setor).map(v => {
+    const c = a && d.checagens[v.placa] && d.checagens[v.placa].auditoria === a.id ? d.checagens[v.placa] : null; return { ...v, status: c ? c.resultado : RES.PEND, checagem: c };
+  }); };
   const resSetor = (d, setor) => { const r = vivas(d), o = {}; for (const p in r) if (r[p].setor === setor) o[p] = { nome:r[p].nome, meu:r[p].cliente === S.cliente }; return o; };
   return {
     reset(){ mem = null; try{ localStorage.removeItem(KEY); }catch(e){} },
-    getSetores(){ return [...new Set(db().veiculos.map(v => v.setor))].sort(); },
+    getSetores(){ const d = db(); return [...new Set(d.veiculos.map(v => v.setor))].sort().map(s => ({ setor:s, ...d.auds[s] })); },
     getAuditores(){ return [...new Set(Object.values(db().checagens).map(c => c.realizador))].sort(); },
-    getVeiculos(setor){ const d = db(); vivas(d); write(d); return { versao:d.versao[setor] || 0, veiculos:veicSetor(d, setor), reservas:resSetor(d, setor) }; },
+    getVeiculos(setor){ const d = db(); vivas(d); write(d); return { versao:d.versao[setor] || 0, veiculos:veicSetor(d, setor), reservas:resSetor(d, setor), auditoria:audAberta(d, setor) }; },
     sync(setor, versao, aberta){
       const d = db(); vivas(d);
       if (aberta && d.reservas[aberta] && d.reservas[aberta].cliente === S.cliente) d.reservas[aberta].ts = Date.now();
       write(d);
       const v = d.versao[setor] || 0;
-      return { versao:v, reservas:resSetor(d, setor), veiculos: v !== versao ? veicSetor(d, setor) : null };
+      const a = audAberta(d, setor);
+      return { versao:v, reservas:resSetor(d, setor), auditoria:a, finalizada: a ? null : d.auds[setor], veiculos: v !== versao ? veicSetor(d, setor) : null };
     },
     reservar(setor, placa){
       const d = db(); const r = vivas(d)[placa];
+      if (!audAberta(d, setor)) return { ok:false, encerrada:true };
       if (r && r.cliente !== S.cliente) return { ok:false, por:r.nome };
-      const c = d.checagens[placa];
+      const c = veicSetor(d, setor).find(v => v.placa === placa)?.checagem;
       if (c && FINALIZADOS.includes(c.resultado) && !mesmoNome(c.realizador, S.resp)) return { ok:false, por:c.realizador, finalizado:true };
       d.reservas[placa] = { setor, cliente:S.cliente, nome:S.resp, ts:Date.now() }; write(d); return { ok:true };
     },
@@ -430,20 +450,30 @@ const demo = (() => {
     salvar(reg){
       const d = db(); const r = vivas(d)[reg.placa];
       if (r && r.cliente !== S.cliente) throw new Error('Veículo em checagem por ' + r.nome);
-      const ant = d.checagens[reg.placa];
+      const a = audAberta(d, reg.setor); if (!a) throw new Error('A auditoria deste setor já foi finalizada.');
+      reg.auditoria = a.id;
+      const ant = d.checagens[reg.placa] && d.checagens[reg.placa].auditoria === a.id ? d.checagens[reg.placa] : null;
       if (ant && FINALIZADOS.includes(ant.resultado) && !mesmoNome(ant.realizador, S.resp)) throw new Error('Checagem finalizada por ' + ant.realizador + '. Somente ele(a) pode editar.');
       reg.realizador = S.resp;
       reg.id = 'CHK-' + Date.now().toString(36).toUpperCase();
       reg.dataHora = new Date().toISOString();
       reg.edicao = ant ? (ant.edicao || 1) + 1 : 1;
       d.checagens[reg.placa] = reg; delete d.reservas[reg.placa]; bump(d, reg.setor); write(d); return reg;
+    },
+    finalizar(setor){
+      const d = db(), a = audAberta(d, setor); if (!a) throw new Error('Este setor não tem auditoria aberta.');
+      const vs = veicSetor(d, setor), n = st => vs.filter(v => v.status === st).length;
+      a.status = 'FINALIZADA'; a.finalizadaEm = new Date().toISOString(); a.finalizadaPor = S.resp;
+      a.resumo = { frota:vs.length, avaliados:n(RES.OK) + n(RES.NOK) + n(RES.OFF), naoAvaliados:n(RES.PEND), ok:n(RES.OK), chave:n(RES.OFF) };
+      for (const p in d.reservas) if (d.reservas[p].setor === setor) delete d.reservas[p];
+      bump(d, setor); write(d); return a;
     }
   };
 })();
 
 const api = {};
-['getSetores','getAuditores','getVeiculos','sync','reservar','liberar','salvar'].forEach(fn => {
-  const gasName = { sync:'sincronizar', salvar:'salvarChecagem' }[fn] || fn;
+['getSetores','getAuditores','getVeiculos','sync','reservar','liberar','salvar','finalizar'].forEach(fn => {
+  const gasName = { sync:'sincronizar', salvar:'salvarChecagem', finalizar:'finalizarAuditoria' }[fn] || fn;
   api[fn] = async (...a) => {
     try{ return ONLINE ? await chamarApi(gasName, a) : demo[fn](...a); }
     catch(e){ throw e; }
@@ -490,7 +520,7 @@ function nomesRecentes(){ try{ return JSON.parse(localStorage.getItem('uv_nomes'
 function guardarNome(n){ const l = [n, ...nomesRecentes().filter(x => !mesmoNome(x, n))].slice(0, 6); ls.set('nomes', JSON.stringify(l)); }
 
 async function abrirInicio(){
-  pararSync();
+  pararSync(); S.auditoria = null;
   if (S.aberta){ api.liberar(S.setor, S.aberta).catch(() => {}); S.aberta = null; }
   fechar(true); S.setor = null; ss.set('setor', null);
   $('#mUser').textContent = S.resp || 'Auditor não informado'; $('#mPerfil').textContent = 'Nenhuma auditoria em andamento';
@@ -498,9 +528,11 @@ async function abrirInicio(){
   $('#inpResp').value = S.resp || ls.get('resp') || '';
   tela('scrStart'); loading(true);
   try{
-    const setores = await api.getSetores();
-    const lista = (setores || []).map(s => String(s).trim()).filter(Boolean);
-    $('#selSetor').innerHTML = '<option value="" disabled selected hidden>Selecione o setor…</option>' + lista.map(s => `<option>${esc(s)}</option>`).join('');
+    const setores = (await api.getSetores() || []).map(s => typeof s === 'string' ? { setor:s, status:'ABERTA' } : s).filter(s => String(s.setor || '').trim());
+    S.setores = Object.fromEntries(setores.map(s => [s.setor, s]));
+    const lista = setores.map(s => s.setor);
+    $('#selSetor').innerHTML = '<option value="" disabled selected hidden>Selecione o setor…</option>' +
+      setores.map(s => `<option value="${esc(s.setor)}">${esc(s.setor)}${s.status === 'FINALIZADA' ? ' · concluída' : ''}</option>`).join('');
     const ult = ls.get('setor'); if (ult && lista.includes(ult)) $('#selSetor').value = ult;
     if (!lista.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
     api.getAuditores().then(nomes => {
@@ -510,7 +542,22 @@ async function abrirInicio(){
   }catch(e){ toast('Erro ao carregar setores: ' + (e.message || e)); }
   finally{ loading(false); checarInicio(); }
 }
-function checarInicio(){ $('#btnIniciar').disabled = !($('#selSetor').value && $('#inpResp').value.trim().length >= 3); }
+const fmtDia = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
+function checarInicio(){
+  const s = S.setores?.[$('#selSetor').value], info = $('#stInfo');
+  const fin = s && s.status === 'FINALIZADA';
+  info.hidden = !s;
+  if (s && fin){
+    const r = s.resumo || {};
+    info.className = 'st-info fin';
+    info.innerHTML = `<b>${esc(s.rotulo || 'Auditoria')} concluída em ${fmtDia(s.finalizadaEm)}</b>${r.frota ? `${r.avaliados} de ${r.frota} veículos avaliados · ` : ''}finalizada por ${esc(s.finalizadaPor || '—')}.<br>Aguardando nova base no cadastro para abrir a próxima auditoria.`;
+  } else if (s){
+    info.className = 'st-info ab';
+    info.innerHTML = `<b>${esc(s.rotulo || 'Auditoria')} em andamento</b>Aberta em ${fmtDia(s.abertaEm)}`;
+  }
+  $('#btnIniTxt').textContent = fin ? 'Auditoria concluída' : 'Iniciar auditoria';
+  $('#btnIniciar').disabled = fin || !($('#selSetor').value && $('#inpResp').value.trim().length >= 3);
+}
 $('#selSetor').addEventListener('change', checarInicio);
 $('#inpResp').addEventListener('input', checarInicio);
 $('#btnIniciar').addEventListener('click', async () => {
@@ -524,17 +571,67 @@ async function iniciarAuditoria(){
   S.versao = -1; S.veiculos = []; S.tab = 'pend'; S.filtro = 'todos'; S.busca = ''; $('#inpBusca').value = '';
   $$('.tab').forEach(x => x.classList.toggle('on', x.dataset.tab === 'pend'));
   tela('scrAud'); loading(true);
-  try{ const r = await api.getVeiculos(S.setor); aplicar(r); }
+  try{
+    const r = await api.getVeiculos(S.setor);
+    if (!r.auditoria){ loading(false); toast('A auditoria de ' + S.setor + ' já foi concluída'); return abrirInicio(); }
+    S.auditoria = r.auditoria;
+    $('#aResp').textContent = 'Auditor: ' + S.resp + ' · ' + (r.auditoria.rotulo || '');
+    aplicar(r);
+  }
   catch(e){ toast('Erro ao carregar veículos: ' + (e.message || e)); }
   finally{ loading(false); }
   iniciarSync();
 }
 $('#btnTrocar').addEventListener('click', () => abrirInicio());
+$('#btnFinalizar').addEventListener('click', abrirFinalizar);
+
+/* =====================================================================
+   FINALIZAR AUDITORIA DO SETOR
+   ===================================================================== */
+function abrirFinalizar(){
+  const V = S.veiculos, n = st => V.filter(v => v.status === st).length;
+  const ok = n(RES.OK), nok = n(RES.NOK), off = n(RES.OFF), pend = n(RES.PEND), aval = ok + nok + off;
+  const outros = Object.values(S.reservas).filter(r => !r.meu).map(r => r.nome);
+  S.atual = null; S.form = null;
+  $('#mPref').innerHTML = `<small style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px">Finalizar auditoria</small>${esc(S.setor)}`;
+  $('#mSub').innerHTML = `<span>${esc(S.auditoria?.rotulo || '')} · aberta em ${fmtDia(S.auditoria?.abertaEm)}</span>`;
+  const lin = (cor, t, v) => `<tr><td>${cor ? `<i style="background:${cor}"></i>` : ''}${t}</td><td>${v}</td></tr>`;
+  $('#mBody').innerHTML = `
+    <table class="fin-tbl">
+      ${lin('', 'Frota do setor', V.length)}
+      ${lin('var(--teal)', 'Conformes', ok)}
+      ${lin('var(--red)', 'Não conformes', nok)}
+      ${lin('var(--off)', 'Chave geral desligada', off)}
+      ${lin('var(--warn)', 'Pendentes (ficam como não avaliados)', pend)}
+      <tr class="tot"><td>Avaliados</td><td>${aval} de ${V.length}</td></tr>
+    </table>
+    ${pend ? `<div class="st-info" style="background:var(--warn-50);color:#7A4E0B;margin:0 0 10px"><b>Ainda há ${pend} veículo(s) pendente(s)</b>Ao finalizar, eles entram no resultado como não avaliados.</div>` : ''}
+    ${outros.length ? `<div class="st-info" style="background:var(--red-50);color:#8a0019;margin:0 0 10px"><b>${esc([...new Set(outros)].join(', '))} está checando um veículo agora</b>A checagem em andamento será perdida.</div>` : ''}
+    <p class="note" style="margin:0">Depois de finalizada, a auditoria fica como <b>concluída</b> no app e não aceita mais checagens. A próxima abre quando uma nova base do setor for importada no cadastro.</p>`;
+  $('#mFoot').innerHTML = `<div class="hint"></div><button class="btn btn-g" data-close>Cancelar</button><button class="btn btn-r" id="btnConfFinalizar">Finalizar auditoria</button>`;
+  $('#ovChk').classList.add('show');
+}
+async function confirmarFinalizar(){
+  loading(true);
+  try{
+    const r = await api.finalizar(S.setor);
+    fechar(true); const setor = S.setor; S.auditoria = null;
+    toast(`Auditoria de ${setor} finalizada · ${r.resumo?.avaliados ?? ''} avaliados`);
+    await abrirInicio();
+    $('#selSetor').value = setor; checarInicio();
+  }catch(e){ toast('Não foi possível finalizar: ' + (e.message || e)); }
+  finally{ loading(false); }
+}
 
 /* =====================================================================
    SINCRONIZAÇÃO EM TEMPO REAL
    ===================================================================== */
 function aplicar(r){
+  if (S.auditoria && (!r.auditoria || r.auditoria.id !== S.auditoria.id)){
+    const f = r.finalizada;
+    toast(f && f.finalizadaPor ? `Auditoria de ${S.setor} finalizada por ${f.finalizadaPor}` : `A auditoria de ${S.setor} foi encerrada`);
+    S.auditoria = null; abrirInicio(); return;
+  }
   if (r.veiculos){
     const antes = Object.fromEntries(S.veiculos.map(v => [v.placa, v.checagem?.id]));
     if (S.versao >= 0) r.veiculos.forEach(v => { if (v.checagem && antes[v.placa] !== v.checagem.id && !mesmoNome(v.checagem.realizador, S.resp)) S.recentes.add(v.placa); });
@@ -559,7 +656,7 @@ function iniciarSync(){ pararSync(); S.timer = setInterval(() => { sync(); tickL
 function pararSync(){ clearInterval(S.timer); S.timer = null; }
 function tickLbl(){ const s = Math.round((Date.now() - S.lastSync) / 1000); $('#pSync').textContent = S.lastSync ? (s < 5 ? 'Atualizado agora' : `Atualizado há ${s}s`) : ''; }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
-window.addEventListener('storage', e => { if (!ONLINE && e.key === 'uv_cam_demo_v2') sync(); });
+window.addEventListener('storage', e => { if (!ONLINE && e.key === 'uv_cam_demo_v3') sync(); });
 window.addEventListener('pagehide', () => {
   if (!S.aberta) return;
   if (ONLINE && navigator.sendBeacon) navigator.sendBeacon(API_URL.trim(), new Blob([JSON.stringify({ fn:'liberar', cliente:S.cliente, auditor:S.resp, args:[S.setor, S.aberta] })], { type:'text/plain;charset=utf-8' }));
@@ -638,6 +735,7 @@ async function abrirVeiculo(placa){
 async function reservar(v){
   try{
     const r = await api.reservar(S.setor, v.placa);
+    if (!r.ok && r.encerrada){ toast('A auditoria deste setor já foi finalizada'); sync(); return false; }
     if (!r.ok){ toast(r.finalizado ? `Somente ${r.por} pode editar o prefixo ${v.prefixo}` : `Prefixo ${v.prefixo} acabou de ser aberto por ${r.por}`); sync(); return false; }
     S.aberta = v.placa; return true;
   }catch(e){ toast('Erro: ' + (e.message || e)); return false; }
@@ -789,6 +887,7 @@ $('#mBody').addEventListener('input', e => {
 });
 $('#mFoot').addEventListener('click', async e => {
   if (e.target.closest('#btnSalvarNC')) salvar(RES.NOK);
+  if (e.target.closest('#btnConfFinalizar')) confirmarFinalizar();
   if (e.target.closest('#btnEditar')){ const v = S.atual; if (reservaDeOutro(v.placa)) return toast('Veículo em edição por outra pessoa'); if (await reservar(v)) passo1(v.checagem); }
 });
 

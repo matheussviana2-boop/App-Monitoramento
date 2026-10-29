@@ -104,7 +104,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
       <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
       <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#00A19B" stroke-width="2" stroke-linecap="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v4h16v-4"/></svg>
       <b>Clique para escolher a planilha da frota ou arraste até aqui</b>
-      <div class="note">Cada "Tipo Serviço" da planilha vira um setor no app</div>
+      <div class="note">Cada "Tipo Serviço" da planilha vira um setor no app · a planilha substitui o cadastro atual desse setor</div>
     </label>
   </section>
 
@@ -171,14 +171,17 @@ function sugerir(tipoOrig, setor){
 }
 
 /* ---------- API ---------- */
-let demoCad = [];
+let demoCad = [], demoAud = {};
 async function api(fn, args){
   if (!ONLINE){
-    if (fn === 'getCadastro') return { cadastro: demoCad };
+    if (fn === 'getCadastro') return { cadastro: demoCad, auditorias: Object.values(demoAud) };
     if (fn === 'importarCadastro'){
-      const idx = Object.fromEntries(demoCad.map((v, i) => [v.placa, i])); let novos = 0, atu = 0;
-      args[0].forEach(r => { if (r.placa in idx){ demoCad[idx[r.placa]] = r; atu++; } else { idx[r.placa] = demoCad.push(r) - 1; novos++; } });
-      return { novos, atualizados:atu, removidos:0, total:demoCad.length };
+      const rows = args[0], set = new Set(rows.map(r => r.setor)), antes = new Set(demoCad.map(v => v.placa)), noArq = new Set(rows.map(r => r.placa));
+      const removidos = demoCad.filter(v => set.has(v.setor) && !noArq.has(v.placa)).length;
+      demoCad = demoCad.filter(v => !set.has(v.setor) && !noArq.has(v.placa)).concat(rows);
+      const abertas = [], emAndamento = [];
+      set.forEach(s => { if (demoAud[s]?.status === 'ABERTA') emAndamento.push(s); else { demoAud[s] = { setor:s, status:'ABERTA', rotulo:'Nova auditoria' }; abertas.push(s); } });
+      return { novos:rows.filter(r => !antes.has(r.placa)).length, atualizados:rows.filter(r => antes.has(r.placa)).length, removidos, total:demoCad.length, abertas, emAndamento };
     }
   }
   const r = await fetch(API_URL.trim(), { method:'POST', redirect:'follow', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify({ fn, args }) });
@@ -188,12 +191,12 @@ async function api(fn, args){
 }
 
 /* ---------- estado ---------- */
-const S = { arquivo:'', base:[], regras:{}, rows:[], erros:[], placasAtuais:new Set() };
+const S = { arquivo:'', base:[], regras:{}, rows:[], erros:[], placasAtuais:new Set(), atual:[], auds:[] };
 const chaveRegra = (setor, tipoOrig) => setor + '||' + tipoOrig;
 
 async function carregarPlacasAtuais(){
-  try{ const r = await api('getCadastro', []); S.placasAtuais = new Set((r.cadastro || []).map(v => normPlaca(v.placa))); }
-  catch(e){ S.placasAtuais = new Set(); }
+  try{ const r = await api('getCadastro', []); S.atual = r.cadastro || []; S.auds = r.auditorias || []; S.placasAtuais = new Set(S.atual.map(v => normPlaca(v.placa))); }
+  catch(e){ S.placasAtuais = new Set(); S.atual = []; S.auds = []; }
 }
 
 /* ---------- leitura ---------- */
@@ -234,7 +237,8 @@ function render(){
   });
   const setores = [...new Set(S.rows.map(r => r.setor))].sort();
   $('#fileNome').textContent = S.arquivo;
-  $('#chips').innerHTML = setores.map(s => `<span class="chip">${esc(s)} · ${S.rows.filter(r => r.setor === s).length}</span>`).join(' ') +
+  const audAberta = s => S.auds.some(a => a.setor === s && a.status === 'ABERTA');
+  $('#chips').innerHTML = setores.map(s => `<span class="chip">${esc(s)} · ${S.rows.filter(r => r.setor === s).length} · ${audAberta(s) ? 'auditoria em andamento' : 'abre nova auditoria'}</span>`).join(' ') +
     (S.erros.length ? ` <span class="chip err">${S.erros.length} com erro</span>` : '');
 
   const multi = setores.length > 1;
@@ -251,7 +255,9 @@ function render(){
       <td>${esc(r.tipo)}</td><td class="n">${r.cameras}</td></tr>`).join('') + '</tbody>';
 
   const novos = S.rows.filter(r => r.novo).length;
-  $('#resumo').textContent = `${S.rows.length} veículos · ${novos} novos · ${S.rows.length - novos} já cadastrados (serão atualizados)` + (S.erros.length ? ` · ${S.erros.length} linha(s) com erro ficam de fora` : '');
+  const noArq = new Set(S.rows.map(r => r.placa)), setSet = new Set(setores);
+  const saem = S.atual.filter(v => setSet.has(String(v.setor).toUpperCase()) && !noArq.has(normPlaca(v.placa))).length;
+  $('#resumo').textContent = `${S.rows.length} veículos · ${novos} novos · ${S.rows.length - novos} já cadastrados` + (saem ? ` · ${saem} saem do cadastro (não estão na planilha)` : '') + (S.erros.length ? ` · ${S.erros.length} linha(s) com erro ficam de fora` : '');
   validar();
 }
 function validar(){ $('#btnConfirmar').disabled = !S.rows.length; }
@@ -270,7 +276,10 @@ async function confirmar(){
     const setores = [...new Set(enviar.map(r => r.setor))].sort(), nome = S.arquivo;
     const r = await api('importarCadastro', [enviar]);
     limpar();
-    $('#msg').innerHTML = `<div class="alert ok"><b>Importação concluída — ${esc(nome)}</b><br>${r.novos} veículo(s) novo(s) e ${r.atualizados} atualizado(s) em ${esc(setores.join(', '))}. Total no cadastro: ${r.total} veículos. O app mostra os veículos em até 1 minuto.</div>`;
+    $('#msg').innerHTML = `<div class="alert ok"><b>Importação concluída — ${esc(nome)}</b><br>Cadastro de ${esc(setores.join(', '))} substituído: ${r.novos + r.atualizados} veículo(s)${r.removidos ? `, ${r.removidos} removido(s)` : ''}.` +
+      (r.abertas?.length ? `<br><b>Nova auditoria aberta:</b> ${esc(r.abertas.join(', '))}.` : '') +
+      (r.emAndamento?.length ? `<br>Auditoria em andamento mantida (checagens já feitas continuam): ${esc(r.emAndamento.join(', '))}.` : '') +
+      ` O app mostra os veículos em até 1 minuto.</div>`;
   }catch(e){ $('#msg').innerHTML = `<div class="alert err">${esc(e.message || e)}</div>`; window.scrollTo({ top:0, behavior:'smooth' }); }
   finally{ loading(false); }
 }
