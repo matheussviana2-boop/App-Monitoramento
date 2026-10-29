@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --teal:#00A19B; --teal-d:#00807B; --teal-50:#E6F6F5; --aqua:#10CFC9;
@@ -247,12 +246,7 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
     <div class="who-m"><b id="mUser">—</b><small id="mPerfil">—</small></div>
     <button data-act="setor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>Trocar setor / encerrar auditoria</button>
     <button data-act="exportar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3m0 0L8 7m4-4l4 4M4 17v3h16v-3"/></svg>Exportar checagens do setor (CSV)</button>
-    <div>
-      <hr>
-      <button data-act="importar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/></svg>Importar cadastro de veículos</button>
-      <button data-act="modelo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>Baixar modelo de cadastro</button>
-    </div>
-    <hr>
+    <hr data-demo>
     <button data-act="limpar" class="danger" data-demo><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m-9 0l1 14h8l1-14"/></svg>Restaurar dados de demonstração</button>
   </div>
 </header>
@@ -266,7 +260,6 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
     <div class="field"><label for="selSetor">Setor</label><select id="selSetor" class="select"></select></div>
     <div class="field"><label for="inpResp">Nome do auditor</label><input id="inpResp" class="inp" placeholder="Nome e sobrenome" list="dlNomes" autocomplete="name">
       <datalist id="dlNomes"></datalist></div>
-    <p class="note" style="margin:-4px 0 14px">Use sempre o mesmo nome: só quem finalizou a checagem de um veículo pode editá-la.</p>
     <button class="btn btn-p" id="btnIniciar" disabled>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Iniciar auditoria
     </button>
@@ -317,32 +310,6 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
     </div>
     <div class="sh-body" id="mBody"></div>
     <div class="sh-foot" id="mFoot"></div>
-  </div>
-</div>
-
-<!-- modal importação -->
-<div class="ov" id="ovImp">
-  <div class="sheet" role="dialog" aria-modal="true">
-    <div class="sh-head">
-      <div class="t"><h2 style="font-size:19px">Importar cadastro de veículos</h2>
-        <div class="sub">Colunas: SETOR, PREFIXO, PLACA, TIPO e QTD_CAMERAS (.xlsx, .xls ou .csv)</div></div>
-      <button class="icon-btn" data-close aria-label="Fechar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
-    <div class="sh-body">
-      <label class="drop" id="drop">
-        <input type="file" id="fileImp" accept=".xlsx,.xls,.csv" hidden>
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00A19B" stroke-width="2" stroke-linecap="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v4h16v-4"/></svg>
-        <div style="margin-top:6px;font-weight:600">Clique para selecionar o arquivo</div>
-        <div class="note" style="margin-top:2px">ou arraste a planilha até aqui</div>
-      </label>
-      <div id="impPrev"></div>
-      <div class="field" style="margin-top:14px"><label for="impSenha">Senha de administrador</label><input id="impSenha" class="inp" type="password" autocomplete="off"></div>
-    </div>
-    <div class="sh-foot">
-      <div class="hint" id="impHint">Nenhum arquivo carregado</div>
-      <button class="btn btn-g" data-close>Cancelar</button>
-      <button class="btn btn-p" id="btnImp" disabled>Importar</button>
-    </div>
   </div>
 </div>
 
@@ -469,22 +436,13 @@ const demo = (() => {
       reg.dataHora = new Date().toISOString();
       reg.edicao = ant ? (ant.edicao || 1) + 1 : 1;
       d.checagens[reg.placa] = reg; delete d.reservas[reg.placa]; bump(d, reg.setor); write(d); return reg;
-    },
-    importar(rows, modo, senha){
-      if (senha !== 'admin') throw new Error('Senha de administrador incorreta (demonstração: admin)');
-      const d = db();
-      if (modo === 'substituir'){ d.veiculos = []; d.checagens = {}; }
-      const idx = Object.fromEntries(d.veiculos.map((v, i) => [v.placa, i])); let novos = 0, at = 0;
-      rows.forEach(r => { if (r.placa in idx){ d.veiculos[idx[r.placa]] = r; at++; } else { idx[r.placa] = d.veiculos.push(r) - 1; novos++; } });
-      new Set(rows.map(r => r.setor)).forEach(s => bump(d, s)); write(d);
-      return { novos, atualizados:at, total:d.veiculos.length };
     }
   };
 })();
 
 const api = {};
-['getSetores','getVeiculos','sync','reservar','liberar','salvar','importar'].forEach(fn => {
-  const gasName = { sync:'sincronizar', salvar:'salvarChecagem', importar:'importarCadastro' }[fn] || fn;
+['getSetores','getVeiculos','sync','reservar','liberar','salvar'].forEach(fn => {
+  const gasName = { sync:'sincronizar', salvar:'salvarChecagem' }[fn] || fn;
   api[fn] = async (...a) => {
     try{ return ONLINE ? await chamarApi(gasName, a) : demo[fn](...a); }
     catch(e){ throw e; }
@@ -495,7 +453,7 @@ const api = {};
    ESTADO + UTILITÁRIOS
    ===================================================================== */
 const S = { cliente:idAparelho(), resp:'', setor:null, versao:-1, veiculos:[], reservas:{}, tab:'pend', filtro:'todos', busca:'',
-            atual:null, aberta:null, form:null, importRows:[], timer:null, lastSync:0, recentes:new Set() };
+            atual:null, aberta:null, form:null, timer:null, lastSync:0, recentes:new Set() };
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -542,7 +500,7 @@ async function abrirInicio(){
     const setores = await api.getSetores();
     $('#selSetor').innerHTML = '<option value="">Selecione o setor…</option>' + setores.map(s => `<option>${esc(s)}</option>`).join('');
     const ult = ls.get('setor'); if (ult && setores.includes(ult)) $('#selSetor').value = ult;
-    if (!setores.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO ou importe pelo menu');
+    if (!setores.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
   }catch(e){ toast('Erro ao carregar setores: ' + (e.message || e)); }
   finally{ loading(false); checarInicio(); }
 }
@@ -776,61 +734,8 @@ function fechar(semLiberar){
 }
 
 /* =====================================================================
-   IMPORTAÇÃO DO CADASTRO (protegida por senha de administrador)
+   EXPORTAÇÃO
    ===================================================================== */
-const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-const COLS = {
-  setor:['SETOR','CONTRATO','OPERACAO','CLIENTE'], placa:['PLACA','PLACAS'],
-  prefixo:['PREFIXO','FROTA','NUMERODEFROTA','NFROTA','CARRO'], tipo:['TIPO','TIPOVEICULO','TIPODEVEICULO','MODELO','CATEGORIA'],
-  cameras:['QTDCAMERAS','QTDECAMERAS','QUANTIDADEDECAMERAS','QUANTIDADECAMERAS','CAMERAS','QTDCAMERA','NCAMERAS']
-};
-function lerArquivo(file){
-  const rd = new FileReader();
-  rd.onload = e => {
-    try{
-      const wb = XLSX.read(e.target.result, { type:'array' });
-      const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
-      if (!raw.length) throw new Error('Planilha vazia');
-      const heads = Object.keys(raw[0]), map = {};
-      for (const k in COLS) map[k] = heads.find(h => COLS[k].includes(norm(h)));
-      const falta = ['setor','prefixo','placa','cameras'].filter(k => !map[k]);
-      if (falta.length) throw new Error('Coluna não encontrada: ' + falta.map(f => f === 'cameras' ? 'QTD_CAMERAS' : f.toUpperCase()).join(', '));
-      const rows = [], erros = [];
-      raw.forEach((r, i) => {
-        const placa = norm(r[map.placa]), cams = parseInt(r[map.cameras], 10), setor = String(r[map.setor]).trim().toUpperCase();
-        if (!placa && !setor) return;
-        if (!placa || !setor || !(cams > 0)){ erros.push(i + 2); return; }
-        rows.push({ setor, placa, prefixo:String(r[map.prefixo]).trim(), tipo: map.tipo ? String(r[map.tipo]).trim().toUpperCase() : '', cameras:cams });
-      });
-      S.importRows = rows;
-      const g = {}; rows.forEach(r => { g[r.setor] = g[r.setor] || { n:0, c:0 }; g[r.setor].n++; g[r.setor].c += r.cameras; });
-      $('#impPrev').innerHTML = `
-        <table class="imp-tbl"><thead><tr><th>Setor</th><th>Veículos</th><th>Câmeras</th></tr></thead><tbody>
-        ${Object.keys(g).sort().map(s => `<tr><td>${esc(s)}</td><td>${g[s].n}</td><td>${g[s].c}</td></tr>`).join('')}</tbody></table>
-        ${erros.length ? `<div class="note" style="color:var(--red)">${erros.length} linha(s) ignorada(s) por dados incompletos: ${erros.slice(0,12).join(', ')}${erros.length > 12 ? '…' : ''}</div>` : ''}
-        <div class="radio"><label><input type="radio" name="modo" value="acrescentar" checked> Atualizar / acrescentar</label>
-        <label><input type="radio" name="modo" value="substituir"> Substituir cadastro inteiro</label></div>`;
-      $('#impHint').textContent = `${file.name} · ${rows.length} veículos válidos`; $('#btnImp').disabled = !rows.length;
-    }catch(err){
-      S.importRows = []; $('#btnImp').disabled = true;
-      $('#impPrev').innerHTML = `<div class="note" style="color:var(--red)">${esc(err.message)}</div>`; $('#impHint').textContent = 'Arquivo inválido';
-    }
-  };
-  rd.readAsArrayBuffer(file);
-}
-async function confirmarImport(){
-  const modo = document.querySelector('input[name=modo]:checked')?.value || 'acrescentar';
-  const senha = $('#impSenha').value;
-  if (!senha){ $('#impSenha').focus(); return toast('Informe a senha de administrador'); }
-  if (modo === 'substituir' && !confirm('Substituir o cadastro inteiro? Veículos fora da nova planilha serão removidos.')) return;
-  loading(true);
-  try{
-    const r = await api.importar(S.importRows, modo, senha);
-    fechar(); toast(`Importação concluída · ${r.novos} novos, ${r.atualizados} atualizados`);
-    if (S.setor && !$('#scrAud').hidden) { S.versao = -1; await sync(); } else await abrirInicio();
-  }catch(e){ toast('Erro na importação: ' + (e.message || e)); }
-  finally{ loading(false); }
-}
 function baixar(nome, conteudo){
   const b = new Blob(['﻿' + conteudo], { type:'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nome; a.click();
@@ -888,20 +793,9 @@ $('#menu').addEventListener('click', async e => {
   switch (b.dataset.act){
     case 'setor': abrirInicio(); break;
     case 'exportar': if (!S.setor || $('#scrAud').hidden) return toast('Inicie a auditoria de um setor'); exportarCSV(); break;
-    case 'importar':
-      S.importRows = []; $('#impSenha').value = ''; $('#impPrev').innerHTML = ''; $('#impHint').textContent = 'Nenhum arquivo carregado'; $('#btnImp').disabled = true; $('#fileImp').value = '';
-      $('#ovImp').classList.add('show'); break;
-    case 'modelo': baixar('modelo_cadastro_cameras.csv', 'SETOR;PREFIXO;PLACA;TIPO;QTD_CAMERAS\nMUSA;3101;RTB4F21;MICRO;4\nVALE;4101;PJK2A33;MICRO;3\nVALE;4201;QWE1B22;VAN;2\nVALE;4301;HIL9C88;HILUX;2'); break;
     case 'limpar': if (confirm('Restaurar os dados de demonstração? Todas as checagens de teste serão apagadas.')){ demo.reset(); S.versao = -1; if (!$('#scrAud').hidden) await sync(); else await abrirInicio(); toast('Dados de demonstração restaurados'); } break;
   }
 });
-$('#fileImp').addEventListener('change', e => e.target.files[0] && lerArquivo(e.target.files[0]));
-const drop = $('#drop');
-['dragover','dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor = 'var(--teal)'; }));
-['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor = ''; }));
-drop.addEventListener('drop', e => e.dataTransfer.files[0] && lerArquivo(e.dataTransfer.files[0]));
-$('#btnImp').addEventListener('click', confirmarImport);
-
 /* =====================================================================
    INÍCIO
    ===================================================================== */
