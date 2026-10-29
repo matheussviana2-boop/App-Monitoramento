@@ -4,9 +4,9 @@
  * - Chamadas à API (Google Apps Script) nunca passam pelo cache.
  * Ao publicar uma versão nova do index.html, aumente VERSAO para forçar a atualização nos aparelhos.
  */
-const VERSAO = 'cameras-v2';
+const VERSAO = 'cameras-v3';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon-32.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
