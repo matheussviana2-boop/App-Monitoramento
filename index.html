@@ -499,9 +499,10 @@ async function abrirInicio(){
   tela('scrStart'); loading(true);
   try{
     const setores = await api.getSetores();
-    $('#selSetor').innerHTML = '<option value="">Selecione o setor…</option>' + setores.map(s => `<option>${esc(s)}</option>`).join('');
-    const ult = ls.get('setor'); if (ult && setores.includes(ult)) $('#selSetor').value = ult;
-    if (!setores.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
+    const lista = (setores || []).map(s => String(s).trim()).filter(Boolean);
+    $('#selSetor').innerHTML = '<option value="" disabled selected hidden>Selecione o setor…</option>' + lista.map(s => `<option>${esc(s)}</option>`).join('');
+    const ult = ls.get('setor'); if (ult && lista.includes(ult)) $('#selSetor').value = ult;
+    if (!lista.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
     api.getAuditores().then(nomes => {
       const todos = nomesRecentes(); (nomes || []).forEach(n => { if (!todos.some(x => mesmoNome(x, n))) todos.push(n); });
       $('#dlNomes').innerHTML = todos.map(n => `<option value="${esc(n)}">`).join('');
