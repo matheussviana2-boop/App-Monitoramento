@@ -377,7 +377,7 @@ function preencherFiltros(){
 Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#4A5E5D';
-Chart.defaults.animation.duration = 350;
+Chart.defaults.animation.duration = 0;
 const charts = {};
 
 /** Tooltip externo: valor em destaque, nome secundário, chave em traço curto. */
@@ -605,12 +605,14 @@ function exportarCSV(){
    CARGA + ATUALIZAÇÃO
    ===================================================================== */
 let carregando = false;
+let ultimoGerado = '';
 async function carregar(){
   if (carregando) return; carregando = true;
-  $('#main').classList.add('loading');
+  if (!S.raw) $('#main').classList.add('loading');
   try{
-    S.raw = await buscar();
-    preencherFiltros(); render();
+    const novo = await buscar();
+    if (ONLINE) try{ localStorage.setItem('uv_dash', JSON.stringify(novo)); }catch(e){}
+    if (novo.gerado !== ultimoGerado || !S.raw){ ultimoGerado = novo.gerado; S.raw = novo; preencherFiltros(); render(); }
     $('#upd').className = 'upd' + (ONLINE ? '' : ' demo');
     $('#updTxt').textContent = (ONLINE ? 'Atualizado às ' : 'Demonstração · ') + new Date(S.raw.gerado).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   }catch(e){
@@ -630,6 +632,8 @@ $('#btnCsv').addEventListener('click', exportarCSV);
 $('#btnAtualizar').addEventListener('click', carregar);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) carregar(); });
 
+// mostra na hora os últimos dados conhecidos; os atuais chegam em seguida
+if (ONLINE) try{ const c = JSON.parse(localStorage.getItem('uv_dash') || 'null'); if (c){ S.raw = c; ultimoGerado = c.gerado; preencherFiltros(); render(); $('#updTxt').textContent = 'Atualizando…'; } }catch(e){}
 carregar();
 setInterval(() => { if (!document.hidden) carregar(); }, REFRESH_MS);
 </script>

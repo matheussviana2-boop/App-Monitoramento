@@ -89,6 +89,12 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
 .st-info.ab{background:var(--teal-50);color:var(--teal-d)}
 .st-info.fin{background:var(--off-50);color:#3A4550}
 .st-info b{display:block;font-size:14px}
+.cam-edit{font-size:12px;font-weight:700;color:var(--teal-d);background:var(--teal-50);border-radius:7px;padding:3px 8px}
+.cam-step{display:inline-flex;align-items:center;gap:2px;border:1.5px solid var(--teal);border-radius:8px;overflow:hidden;background:#fff}
+.cam-step button{width:28px;height:28px;font-size:16px;font-weight:700;color:var(--teal-d)}
+.cam-step b{min-width:22px;text-align:center;font-size:14px;color:var(--ink)}
+.cam-step .okb{width:auto;padding:0 10px;font-size:12px;background:var(--teal);color:#fff;height:28px}
+.saving{color:var(--warn);font-weight:700}
 .fin-tbl{width:100%;border-collapse:collapse;font-size:14px;margin:4px 0 12px}
 .fin-tbl td{padding:8px 4px;border-bottom:1px solid var(--line)}
 .fin-tbl td:last-child{text-align:right;font-weight:700}
@@ -274,6 +280,7 @@ textarea.inp{resize:vertical;min-height:70px;font-size:15px}
     <div class="field"><label for="inpResp">Nome do auditor</label><input id="inpResp" class="inp" placeholder="Nome e sobrenome" list="dlNomes" autocomplete="name">
       <datalist id="dlNomes"></datalist></div>
     <div class="st-info" id="stInfo" hidden></div>
+    <button class="btn btn-o" id="btnReabrir" hidden style="width:100%;margin:-4px 0 10px">Reabrir auditoria para ajustes</button>
     <button class="btn btn-p" id="btnIniciar" disabled>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span id="btnIniTxt">Iniciar auditoria</span>
     </button>
@@ -427,8 +434,10 @@ const demo = (() => {
   const resSetor = (d, setor) => { const r = vivas(d), o = {}; for (const p in r) if (r[p].setor === setor) o[p] = { nome:r[p].nome, meu:r[p].cliente === S.cliente }; return o; };
   return {
     reset(){ mem = null; try{ localStorage.removeItem(KEY); }catch(e){} },
-    getSetores(){ const d = db(); return [...new Set(d.veiculos.map(v => v.setor))].sort().map(s => ({ setor:s, ...d.auds[s] })); },
-    getAuditores(){ return [...new Set(Object.values(db().checagens).map(c => c.realizador))].sort(); },
+    inicio(){ const d = db(); return { setores:[...new Set(d.veiculos.map(v => v.setor))].sort().map(s => ({ setor:s, ...d.auds[s] })),
+      auditores:[...new Set(Object.values(d.checagens).map(c => c.realizador))].sort() }; },
+    atualizarCameras(setor, placa, qtd){ const d = db(); if (!audAberta(d, setor)) throw new Error('Auditoria finalizada'); const v = d.veiculos.find(x => x.placa === placa); v.cameras = qtd; bump(d, setor); write(d); return { placa, cameras:qtd }; },
+    reabrir(setor){ const d = db(), a = d.auds[setor]; a.status = 'ABERTA'; a.finalizadaEm = ''; a.finalizadaPor = ''; bump(d, setor); write(d); return a; },
     getVeiculos(setor){ const d = db(); vivas(d); write(d); return { versao:d.versao[setor] || 0, veiculos:veicSetor(d, setor), reservas:resSetor(d, setor), auditoria:audAberta(d, setor) }; },
     sync(setor, versao, aberta){
       const d = db(); vivas(d);
@@ -472,8 +481,8 @@ const demo = (() => {
 })();
 
 const api = {};
-['getSetores','getAuditores','getVeiculos','sync','reservar','liberar','salvar','finalizar'].forEach(fn => {
-  const gasName = { sync:'sincronizar', salvar:'salvarChecagem', finalizar:'finalizarAuditoria' }[fn] || fn;
+['inicio','getVeiculos','sync','reservar','liberar','salvar','finalizar','reabrir','atualizarCameras'].forEach(fn => {
+  const gasName = { sync:'sincronizar', salvar:'salvarChecagem', finalizar:'finalizarAuditoria', reabrir:'reabrirAuditoria' }[fn] || fn;
   api[fn] = async (...a) => {
     try{ return ONLINE ? await chamarApi(gasName, a) : demo[fn](...a); }
     catch(e){ throw e; }
@@ -483,7 +492,7 @@ const api = {};
 /* =====================================================================
    ESTADO + UTILITÁRIOS
    ===================================================================== */
-const S = { cliente:idAparelho(), resp:'', setor:null, versao:-1, veiculos:[], reservas:{}, tab:'pend', filtro:'todos', busca:'',
+const S = { cliente:idAparelho(), pend:new Set(), resp:'', setor:null, versao:-1, veiculos:[], reservas:{}, tab:'pend', filtro:'todos', busca:'',
             atual:null, aberta:null, form:null, timer:null, lastSync:0, recentes:new Set() };
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -526,28 +535,39 @@ async function abrirInicio(){
   $('#mUser').textContent = S.resp || 'Auditor não informado'; $('#mPerfil').textContent = 'Nenhuma auditoria em andamento';
   $('#dlNomes').innerHTML = nomesRecentes().map(n => `<option value="${esc(n)}">`).join('');
   $('#inpResp').value = S.resp || ls.get('resp') || '';
-  tela('scrStart'); loading(true);
+  tela('scrStart');
+  // mostra na hora a última lista conhecida e atualiza em segundo plano
+  let cache = null; try{ cache = JSON.parse(localStorage.getItem('uv_inicio') || 'null'); }catch(e){}
+  if (cache) montarInicio(cache, false); else loading(true);
   try{
-    const setores = (await api.getSetores() || []).map(s => typeof s === 'string' ? { setor:s, status:'ABERTA' } : s).filter(s => String(s.setor || '').trim());
-    S.setores = Object.fromEntries(setores.map(s => [s.setor, s]));
-    const lista = setores.map(s => s.setor);
-    $('#selSetor').innerHTML = '<option value="" disabled selected hidden>Selecione o setor…</option>' +
-      setores.map(s => `<option value="${esc(s.setor)}">${esc(s.setor)}${s.status === 'FINALIZADA' ? ' · concluída' : ''}</option>`).join('');
-    const ult = ls.get('setor'); if (ult && lista.includes(ult)) $('#selSetor').value = ult;
-    if (!lista.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
-    api.getAuditores().then(nomes => {
-      const todos = nomesRecentes(); (nomes || []).forEach(n => { if (!todos.some(x => mesmoNome(x, n))) todos.push(n); });
-      $('#dlNomes').innerHTML = todos.map(n => `<option value="${esc(n)}">`).join('');
-    }).catch(() => {});
+    const r = await api.inicio();
+    try{ localStorage.setItem('uv_inicio', JSON.stringify(r)); }catch(e){}
+    montarInicio(r, true);
   }catch(e){ toast('Erro ao carregar setores: ' + (e.message || e)); }
-  finally{ loading(false); checarInicio(); }
+  finally{ loading(false); }
+}
+function montarInicio(r, avisar){
+  const setores = (r.setores || []).filter(s => String(s.setor || '').trim());
+  S.setores = Object.fromEntries(setores.map(s => [s.setor, s]));
+  const atual = $('#selSetor').value || ls.get('setor');
+  $('#selSetor').innerHTML = '<option value="" disabled selected hidden>Selecione o setor…</option>' +
+    setores.map(s => `<option value="${esc(s.setor)}">${esc(s.setor)}${s.status === 'FINALIZADA' ? ' · concluída' : s.status === 'SEM_AUDITORIA' ? ' · sem auditoria' : ''}</option>`).join('');
+  if (atual && S.setores[atual]) $('#selSetor').value = atual;
+  if (avisar && !setores.length) toast('Nenhum setor cadastrado — importe a base da frota no cadastro');
+  const todos = nomesRecentes(); (r.auditores || []).forEach(n => { if (!todos.some(x => mesmoNome(x, n))) todos.push(n); });
+  $('#dlNomes').innerHTML = todos.map(n => `<option value="${esc(n)}">`).join('');
+  checarInicio();
 }
 const fmtDia = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
 function checarInicio(){
   const s = S.setores?.[$('#selSetor').value], info = $('#stInfo');
-  const fin = s && s.status === 'FINALIZADA';
+  const fin = s && s.status === 'FINALIZADA', sem = s && s.status === 'SEM_AUDITORIA';
   info.hidden = !s;
-  if (s && fin){
+  $('#btnReabrir').hidden = !fin;
+  if (sem){
+    info.className = 'st-info fin';
+    info.innerHTML = '<b>Sem auditoria aberta</b>Importe a base do setor no cadastro para abrir uma auditoria.';
+  } else if (s && fin){
     const r = s.resumo || {};
     info.className = 'st-info fin';
     info.innerHTML = `<b>${esc(s.rotulo || 'Auditoria')} concluída em ${fmtDia(s.finalizadaEm)}</b>${r.frota ? `${r.avaliados} de ${r.frota} veículos avaliados · ` : ''}finalizada por ${esc(s.finalizadaPor || '—')}.<br>Aguardando nova base no cadastro para abrir a próxima auditoria.`;
@@ -556,8 +576,20 @@ function checarInicio(){
     info.innerHTML = `<b>${esc(s.rotulo || 'Auditoria')} em andamento</b>Aberta em ${fmtDia(s.abertaEm)}`;
   }
   $('#btnIniTxt').textContent = fin ? 'Auditoria concluída' : 'Iniciar auditoria';
-  $('#btnIniciar').disabled = fin || !($('#selSetor').value && $('#inpResp').value.trim().length >= 3);
+  $('#btnIniciar').disabled = fin || sem || !($('#selSetor').value && $('#inpResp').value.trim().length >= 3);
 }
+$('#btnReabrir').addEventListener('click', async () => {
+  const setor = $('#selSetor').value, s = S.setores?.[setor], nome = $('#inpResp').value.trim().replace(/\s+/g, ' ');
+  if (nome.length < 3){ $('#inpResp').focus(); return toast('Informe seu nome para reabrir a auditoria'); }
+  if (!confirm(`Reabrir a ${s?.rotulo || 'auditoria'} de ${setor} para ajustes?\n\nDepois dos ajustes, é preciso finalizar de novo.`)) return;
+  S.resp = nome; loading(true);
+  try{
+    const a = await api.reabrir(setor);
+    S.setores[setor] = { setor, ...a }; toast(`Auditoria de ${setor} reaberta`);
+    S.setor = setor; ls.set('setor', setor); ls.set('resp', nome); ss.set('resp', nome); ss.set('setor', setor); guardarNome(nome);
+    loading(false); await iniciarAuditoria();
+  }catch(e){ loading(false); toast('Não foi possível reabrir: ' + (e.message || e)); }
+});
 $('#selSetor').addEventListener('change', checarInicio);
 $('#inpResp').addEventListener('input', checarInicio);
 $('#btnIniciar').addEventListener('click', async () => {
@@ -589,6 +621,7 @@ $('#btnFinalizar').addEventListener('click', abrirFinalizar);
    FINALIZAR AUDITORIA DO SETOR
    ===================================================================== */
 function abrirFinalizar(){
+  if (S.pend.size) return toast('Aguarde: ainda salvando ' + S.pend.size + ' checagem(ns)');
   const V = S.veiculos, n = st => V.filter(v => v.status === st).length;
   const ok = n(RES.OK), nok = n(RES.NOK), off = n(RES.OFF), pend = n(RES.PEND), aval = ok + nok + off;
   const outros = Object.values(S.reservas).filter(r => !r.meu).map(r => r.nome);
@@ -627,7 +660,7 @@ async function confirmarFinalizar(){
    SINCRONIZAÇÃO EM TEMPO REAL
    ===================================================================== */
 function aplicar(r){
-  if (S.auditoria && (!r.auditoria || r.auditoria.id !== S.auditoria.id)){
+  if (S.auditoria && ('auditoria' in r) && (!r.auditoria || r.auditoria.id !== S.auditoria.id)){
     const f = r.finalizada;
     toast(f && f.finalizadaPor ? `Auditoria de ${S.setor} finalizada por ${f.finalizadaPor}` : `A auditoria de ${S.setor} foi encerrada`);
     S.auditoria = null; abrirInicio(); return;
@@ -635,7 +668,7 @@ function aplicar(r){
   if (r.veiculos){
     const antes = Object.fromEntries(S.veiculos.map(v => [v.placa, v.checagem?.id]));
     if (S.versao >= 0) r.veiculos.forEach(v => { if (v.checagem && antes[v.placa] !== v.checagem.id && !mesmoNome(v.checagem.realizador, S.resp)) S.recentes.add(v.placa); });
-    S.veiculos = r.veiculos;
+    S.veiculos = r.veiculos.map(v => S.pend.has(v.placa) ? (S.veiculos.find(x => x.placa === v.placa) || v) : v);
   }
   S.versao = r.versao; S.reservas = r.reservas || {}; S.lastSync = Date.now();
   $('#conn').className = 'conn live'; $('#conn span').textContent = ONLINE ? 'Ao vivo' : 'Demonstração';
@@ -711,7 +744,8 @@ function render(){
           <span>${IC.camS} ${esc(v.cameras)} câm.</span>
           ${nDef ? `<span style="color:var(--red);font-weight:700">${nDef} ${nDef > 1 ? 'itens' : 'item'} c/ defeito</span>` : ''}
         </div>
-        ${c ? `<div class="by">${FINALIZADOS.includes(c.resultado) && !mesmoNome(c.realizador, S.resp) ? IC.lock + ' ' : ''}${esc(c.realizador)} · ${fmtData(c.dataHora)}${c.edicao > 1 ? ' · editado' : ''}</div>` : ''}
+        ${c && c._pend ? '<div class="by saving">Salvando…</div>' : ''}
+        ${c && !c._pend ? `<div class="by">${FINALIZADOS.includes(c.resultado) && !mesmoNome(c.realizador, S.resp) ? IC.lock + ' ' : ''}${esc(c.realizador)} · ${fmtData(c.dataHora)}${c.edicao > 1 ? ' · editado' : ''}</div>` : ''}
       </div>
       ${r ? `<span class="badge busy">Em checagem<br>${esc(primeiroNome(r.nome))}</span>` : BADGE[v.status]}
     </button>`;
@@ -728,17 +762,48 @@ async function abrirVeiculo(placa){
   if (r) return toast(`Prefixo ${v.prefixo} está em checagem por ${r.nome}`);
   S.atual = v; S.form = null;
   $('#mPref').innerHTML = `<small style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px">Prefixo</small>${esc(v.prefixo || '—')}`;
-  $('#mSub').innerHTML = `<span class="placa">${esc(fmtPlaca(v.placa))}</span>${v.tipo ? `<span>${esc(v.tipo)}</span>` : ''}<span>${esc(v.cameras)} câmeras + MDVR</span>`;
+  subVeiculo(v);
+  if (S.pend.has(placa)) return toast('Aguarde: salvando o prefixo ' + v.prefixo);
   if (FINALIZADOS.includes(v.status)){ renderResumo(v); $('#ovChk').classList.add('show'); return; }
-  if (await reservar(v)) { passo1(v.checagem); $('#ovChk').classList.add('show'); }
+  // abre na hora; a reserva é confirmada em segundo plano
+  S.aberta = v.placa; passo1(v.checagem); $('#ovChk').classList.add('show');
+  reservar(v).then(ok => { if (!ok && S.atual === v){ S.aberta = null; fechar(true); } });
+}
+/* cabeçalho do card: placa, tipo e câmeras (com ajuste da quantidade) */
+function subVeiculo(v, editando){
+  $('#mSub').innerHTML = `<span class="placa">${esc(fmtPlaca(v.placa))}</span>${v.tipo ? `<span>${esc(v.tipo)}</span>` : ''}` + (editando
+    ? `<span class="cam-step"><button data-cam="-1" aria-label="Menos uma câmera">−</button><b id="camQtd">${v.cameras}</b><button data-cam="1" aria-label="Mais uma câmera">+</button><button class="okb" id="camOk">OK</button></span>`
+    : `<span>${esc(v.cameras)} câmeras + MDVR</span><button class="cam-edit" id="btnCamEdit">alterar</button>`);
+}
+$('#mSub').addEventListener('click', async e => {
+  const v = S.atual; if (!v) return;
+  if (e.target.closest('#btnCamEdit')) return subVeiculo(v, true);
+  const d = e.target.closest('[data-cam]');
+  if (d){ const q = $('#camQtd'); q.textContent = Math.max(1, Math.min(8, +q.textContent + +d.dataset.cam)); return; }
+  if (e.target.closest('#camOk')){
+    const nova = +$('#camQtd').textContent, antiga = v.cameras;
+    subVeiculo(v);
+    if (nova === antiga) return;
+    v.cameras = nova; subVeiculo(v); atualizarItensCamera(); render();
+    try{ await api.atualizarCameras(S.setor, v.placa, nova); toast(`Prefixo ${v.prefixo} · ${nova} câmeras`); }
+    catch(err){ v.cameras = antiga; if (S.atual === v){ subVeiculo(v); atualizarItensCamera(); } render(); toast('Não foi possível alterar: ' + (err.message || err)); }
+  }
+});
+/** Se a tela de defeitos estiver aberta, refaz a lista de câmeras mantendo o que já foi marcado. */
+function atualizarItensCamera(){
+  if (!S.form || !S.form.itens) return;
+  const ant = Object.fromEntries(S.form.itens.map(i => [i.id, i]));
+  S.form.obs = $('#mObs') ? $('#mObs').value : S.form.obs;
+  S.form.itens = itensDoVeiculo(S.atual).map(it => ({ ...it, defeitos: ant[it.id] ? ant[it.id].defeitos : [], outro: ant[it.id]?.outro || '' }));
+  renderPasso2();
 }
 async function reservar(v){
   try{
     const r = await api.reservar(S.setor, v.placa);
-    if (!r.ok && r.encerrada){ toast('A auditoria deste setor já foi finalizada'); sync(); return false; }
+    if (!r.ok && r.encerrada){ toast('A auditoria deste setor já foi finalizada'); S.aberta = null; sync(); return false; }
     if (!r.ok){ toast(r.finalizado ? `Somente ${r.por} pode editar o prefixo ${v.prefixo}` : `Prefixo ${v.prefixo} acabou de ser aberto por ${r.por}`); sync(); return false; }
     S.aberta = v.placa; return true;
-  }catch(e){ toast('Erro: ' + (e.message || e)); return false; }
+  }catch(e){ toast('Sem conexão para reservar o veículo — tente de novo'); return false; }
 }
 
 function passo1(base){
@@ -800,14 +865,19 @@ async function salvar(resultado){
     itens = itensDoVeiculo(v).map(i => ({ id:i.id, tipo:i.tipo, nome:i.nome, pos:i.pos, defeitos:[], outro:'' }));
   }
   const reg = { setor:v.setor, placa:v.placa, prefixo:v.prefixo, tipo:v.tipo || '', qtdCameras:Number(v.cameras), resultado, itens, observacao:obs, realizador:S.resp };
-  loading(true);
+  // atualiza a tela na hora; a gravação segue em segundo plano
+  const antes = { checagem:v.checagem, status:v.status };
+  v.checagem = { ...reg, dataHora:new Date().toISOString(), edicao:(v.checagem?.edicao || 0) + 1, _pend:true }; v.status = resultado;
+  S.pend.add(v.placa); S.aberta = null;
+  fechar(true); render();
+  toast({ [RES.OK]:`Prefixo ${v.prefixo} · conforme`, [RES.NOK]:`Prefixo ${v.prefixo} · não conformidade registrada`, [RES.OFF]:`Prefixo ${v.prefixo} · chave desligada, segue pendente` }[resultado]);
   try{
     const salvo = await api.salvar(reg);
-    v.checagem = salvo; v.status = salvo.resultado; S.aberta = null;
-    fechar(true); render(); sync();
-    toast({ [RES.OK]:`Prefixo ${v.prefixo} · conforme`, [RES.NOK]:`Prefixo ${v.prefixo} · não conformidade registrada`, [RES.OFF]:`Prefixo ${v.prefixo} · chave desligada, segue pendente` }[resultado]);
-  }catch(e){ toast('Não foi possível salvar: ' + (e.message || e)); }
-  finally{ loading(false); }
+    const x = S.veiculos.find(y => y.placa === reg.placa); if (x){ x.checagem = salvo; x.status = salvo.resultado; }
+  }catch(e){
+    const x = S.veiculos.find(y => y.placa === reg.placa); if (x){ x.checagem = antes.checagem; x.status = antes.status; }
+    toast(`Não foi possível salvar o prefixo ${reg.prefixo}: ` + (e.message || e));
+  }finally{ S.pend.delete(reg.placa); render(); }
 }
 
 function renderResumo(v){
@@ -888,7 +958,8 @@ $('#mBody').addEventListener('input', e => {
 $('#mFoot').addEventListener('click', async e => {
   if (e.target.closest('#btnSalvarNC')) salvar(RES.NOK);
   if (e.target.closest('#btnConfFinalizar')) confirmarFinalizar();
-  if (e.target.closest('#btnEditar')){ const v = S.atual; if (reservaDeOutro(v.placa)) return toast('Veículo em edição por outra pessoa'); if (await reservar(v)) passo1(v.checagem); }
+  if (e.target.closest('#btnEditar')){ const v = S.atual; if (reservaDeOutro(v.placa)) return toast('Veículo em edição por outra pessoa');
+    S.aberta = v.placa; passo1(v.checagem); reservar(v).then(ok => { if (!ok && S.atual === v){ S.aberta = null; fechar(true); } }); }
 });
 
 $('#btnMenu').addEventListener('click', () => $('#menu').classList.toggle('show'));

@@ -113,16 +113,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <div class="card-h">
       <div class="file"><b id="fileNome">—</b><span id="chips"></span></div>
     </div>
-    <div class="cols">
-      <div>
-        <h3 style="font-size:14.5px;margin-bottom:8px">Câmeras por tipo de veículo</h3>
-        <div class="tbl-wrap"><table id="tRegras"></table></div>
-      </div>
-      <div>
-        <h3 style="font-size:14.5px;margin-bottom:8px">Prévia do cadastro</h3>
-        <div class="tbl-wrap max"><table id="tPrev"></table></div>
-      </div>
-    </div>
+    <h3 style="font-size:14.5px;margin-bottom:8px">Prévia do cadastro</h3>
+    <div class="tbl-wrap max"><table id="tPrev"></table></div>
+    <p class="note" style="margin-top:8px">A quantidade de câmeras sai do tipo do veículo e pode ser ajustada depois no card do veículo, dentro do app.</p>
     <div class="bar">
       <div class="resumo" id="resumo">—</div>
       <button class="btn" id="btnCancelar">Cancelar</button>
@@ -174,7 +167,7 @@ function sugerir(tipoOrig, setor){
 let demoCad = [], demoAud = {};
 async function api(fn, args){
   if (!ONLINE){
-    if (fn === 'getCadastro') return { cadastro: demoCad, auditorias: Object.values(demoAud) };
+    if (fn === 'getCadastro') return { placas: demoCad, auditorias: Object.values(demoAud) };
     if (fn === 'importarCadastro'){
       const rows = args[0], set = new Set(rows.map(r => r.setor)), antes = new Set(demoCad.map(v => v.placa)), noArq = new Set(rows.map(r => r.placa));
       const removidos = demoCad.filter(v => set.has(v.setor) && !noArq.has(v.placa)).length;
@@ -194,10 +187,13 @@ async function api(fn, args){
 const S = { arquivo:'', base:[], regras:{}, rows:[], erros:[], placasAtuais:new Set(), atual:[], auds:[] };
 const chaveRegra = (setor, tipoOrig) => setor + '||' + tipoOrig;
 
-async function carregarPlacasAtuais(){
-  try{ const r = await api('getCadastro', []); S.atual = r.cadastro || []; S.auds = r.auditorias || []; S.placasAtuais = new Set(S.atual.map(v => normPlaca(v.placa))); }
-  catch(e){ S.placasAtuais = new Set(); S.atual = []; S.auds = []; }
+let carregando = null;
+function carregarPlacasAtuais(){
+  carregando = api('getCadastro', []).then(r => { S.atual = r.placas || r.cadastro || []; S.auds = r.auditorias || []; S.placasAtuais = new Set(S.atual.map(v => normPlaca(v.placa))); })
+    .catch(() => { S.placasAtuais = new Set(); S.atual = []; S.auds = []; });
+  return carregando;
 }
+carregarPlacasAtuais();   // já busca ao abrir a tela, enquanto o usuário escolhe o arquivo
 
 /* ---------- leitura ---------- */
 function lerArquivo(f){
@@ -217,7 +213,7 @@ function lerArquivo(f){
         .filter(r => r.placa || r.prefixo);
       S.regras = {};
       S.base.forEach(r => { const k = chaveRegra(r.setor, r.tipoOrig); if (!S.regras[k]){ const s = sugerir(r.tipoOrig, r.setor); if (r.camPlanilha > 0) s.cameras = r.camPlanilha; S.regras[k] = { ...s, setor:r.setor, tipoOrig:r.tipoOrig }; } });
-      loading(true); await carregarPlacasAtuais(); loading(false);
+      loading(true); await carregando; loading(false);
       $('#msg').innerHTML = '';
       $('#secArq').hidden = true; $('#secPrev').hidden = false;
       render();
@@ -240,13 +236,6 @@ function render(){
   const audAberta = s => S.auds.some(a => a.setor === s && a.status === 'ABERTA');
   $('#chips').innerHTML = setores.map(s => `<span class="chip">${esc(s)} · ${S.rows.filter(r => r.setor === s).length} · ${audAberta(s) ? 'auditoria em andamento' : 'abre nova auditoria'}</span>`).join(' ') +
     (S.erros.length ? ` <span class="chip err">${S.erros.length} com erro</span>` : '');
-
-  const multi = setores.length > 1;
-  const regras = Object.entries(S.regras).sort((a, b) => a[1].setor.localeCompare(b[1].setor) || a[1].tipo.localeCompare(b[1].tipo));
-  $('#tRegras').innerHTML = `<thead><tr>${multi ? '<th>Setor</th>' : ''}<th>Tipo</th><th class="n">Veíc.</th><th class="n">Câmeras</th></tr></thead><tbody>` +
-    regras.map(([k, g]) => `<tr>${multi ? `<td>${esc(g.setor)}</td>` : ''}<td><b>${esc(g.tipo)}</b><span class="pos">${esc(g.tipoOrig)}</span></td>
-      <td class="n">${S.base.filter(r => chaveRegra(r.setor, r.tipoOrig) === k).length}</td>
-      <td class="n"><span class="cam" data-k="${esc(k)}"><button data-d="-1" aria-label="Menos uma câmera">−</button><span>${g.cameras}</span><button data-d="1" aria-label="Mais uma câmera">+</button></span></td></tr>`).join('') + '</tbody>';
 
   const lista = S.erros.concat(S.rows);
   $('#tPrev').innerHTML = `<thead><tr><th></th><th>Setor</th><th>Prefixo</th><th>Placa</th><th>Tipo</th><th class="n">Câm.</th></tr></thead><tbody>` +
@@ -275,11 +264,11 @@ async function confirmar(){
     const enviar = S.rows.map(({ setor, prefixo, placa, tipo, cameras }) => ({ setor, prefixo, placa, tipo, cameras, ativo:'SIM' }));
     const setores = [...new Set(enviar.map(r => r.setor))].sort(), nome = S.arquivo;
     const r = await api('importarCadastro', [enviar]);
-    limpar();
+    limpar(); carregarPlacasAtuais();
     $('#msg').innerHTML = `<div class="alert ok"><b>Importação concluída — ${esc(nome)}</b><br>Cadastro de ${esc(setores.join(', '))} substituído: ${r.novos + r.atualizados} veículo(s)${r.removidos ? `, ${r.removidos} removido(s)` : ''}.` +
       (r.abertas?.length ? `<br><b>Nova auditoria aberta:</b> ${esc(r.abertas.join(', '))}.` : '') +
       (r.emAndamento?.length ? `<br>Auditoria em andamento mantida (checagens já feitas continuam): ${esc(r.emAndamento.join(', '))}.` : '') +
-      ` O app mostra os veículos em até 1 minuto.</div>`;
+      ` Os veículos já aparecem no app.</div>`;
   }catch(e){ $('#msg').innerHTML = `<div class="alert err">${esc(e.message || e)}</div>`; window.scrollTo({ top:0, behavior:'smooth' }); }
   finally{ loading(false); }
 }
@@ -290,11 +279,6 @@ const drop = $('#drop');
 ['dragover','dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop', e => e.dataTransfer.files[0] && lerArquivo(e.dataTransfer.files[0]));
-$('#tRegras').addEventListener('click', e => {
-  const b = e.target.closest('[data-d]'); if (!b) return;
-  const g = S.regras[b.closest('[data-k]').dataset.k];
-  g.cameras = Math.max(1, Math.min(8, g.cameras + Number(b.dataset.d))); render();
-});
 $('#btnCancelar').addEventListener('click', () => { limpar(); $('#msg').innerHTML = ''; });
 $('#btnConfirmar').addEventListener('click', confirmar);
 </script>
