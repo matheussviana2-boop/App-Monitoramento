@@ -410,6 +410,7 @@ const demo = (() => {
   return {
     reset(){ mem = null; try{ localStorage.removeItem(KEY); }catch(e){} },
     getSetores(){ return [...new Set(db().veiculos.map(v => v.setor))].sort(); },
+    getAuditores(){ return [...new Set(Object.values(db().checagens).map(c => c.realizador))].sort(); },
     getVeiculos(setor){ const d = db(); vivas(d); write(d); return { versao:d.versao[setor] || 0, veiculos:veicSetor(d, setor), reservas:resSetor(d, setor) }; },
     sync(setor, versao, aberta){
       const d = db(); vivas(d);
@@ -441,7 +442,7 @@ const demo = (() => {
 })();
 
 const api = {};
-['getSetores','getVeiculos','sync','reservar','liberar','salvar'].forEach(fn => {
+['getSetores','getAuditores','getVeiculos','sync','reservar','liberar','salvar'].forEach(fn => {
   const gasName = { sync:'sincronizar', salvar:'salvarChecagem' }[fn] || fn;
   api[fn] = async (...a) => {
     try{ return ONLINE ? await chamarApi(gasName, a) : demo[fn](...a); }
@@ -501,6 +502,10 @@ async function abrirInicio(){
     $('#selSetor').innerHTML = '<option value="">Selecione o setor…</option>' + setores.map(s => `<option>${esc(s)}</option>`).join('');
     const ult = ls.get('setor'); if (ult && setores.includes(ult)) $('#selSetor').value = ult;
     if (!setores.length) toast('Nenhum veículo cadastrado — preencha a aba CADASTRO da planilha');
+    api.getAuditores().then(nomes => {
+      const todos = nomesRecentes(); (nomes || []).forEach(n => { if (!todos.some(x => mesmoNome(x, n))) todos.push(n); });
+      $('#dlNomes').innerHTML = todos.map(n => `<option value="${esc(n)}">`).join('');
+    }).catch(() => {});
   }catch(e){ toast('Erro ao carregar setores: ' + (e.message || e)); }
   finally{ loading(false); checarInicio(); }
 }
